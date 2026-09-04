@@ -4,7 +4,15 @@ import { siteConfig } from '../data/site';
 
 <footer class="site-footer">
   <div class="container footer-inner">
-    <p>© {new Date().getFullYear()} {siteConfig.name}</p>
-    <p><a href="/rss.xml">RSS</a> · <a href="/sitemap-index.xml">Sitemap</a> · <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></p>
+    <div>
+      <p class="footer-title">{siteConfig.name}</p>
+      <p class="footer-note">以 Markdown 记录可阅读、可复现的工程实践。</p>
+    </div>
+    <div class="footer-links">
+      <a href="/rss.xml">RSS</a>
+      <a href="/sitemap-index.xml">Sitemap</a>
+      <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+    </div>
   </div>
+  <div class="container footer-bottom"><p>© {new Date().getFullYear()} · 首版模板</p></div>
 </footer>

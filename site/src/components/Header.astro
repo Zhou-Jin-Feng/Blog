@@ -4,11 +4,25 @@ import { navItems, siteConfig } from '../data/site';
 
 <header class="site-header">
   <div class="container header-inner">
-    <a class="brand" href="/" aria-label={`${siteConfig.name}首页`}>{siteConfig.name}</a>
+    <a class="brand" href="/" aria-label={`${siteConfig.name}首页`}>
+      <span class="brand-mark" aria-hidden="true">01</span>
+      <span class="brand-copy">
+        <span class="brand-name">{siteConfig.name}</span>
+        <span class="brand-subtitle">学习 · 工程 · 复盘</span>
+      </span>
+    </a>
     <nav aria-label="主导航">
       <ul class="nav-list">
         {navItems.map((item) => (
-          <li><a href={item.href}>{item.label}</a></li>
+          <li>
+            <a
+              href={item.href}
+              class:list={{ 'is-active': item.href === '/' ? Astro.url.pathname === '/' : Astro.url.pathname.startsWith(item.href) }}
+              aria-current={item.href === '/' ? (Astro.url.pathname === '/' ? 'page' : undefined) : (Astro.url.pathname.startsWith(item.href) ? 'page' : undefined)}
+            >
+              {item.label}
+            </a>
+          </li>
         ))}
       </ul>
     </nav>

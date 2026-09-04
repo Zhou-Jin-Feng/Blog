@@ -183,11 +183,11 @@ npm run test:e2e：退出码 0；4 passed（desktop-chromium/mobile-chromium 各
 
 ## Stage 2 - 内容模型与 P0 页面
 
-- 状态：PASS WITH NOTES，等待用户查看 MVP 和 Stage 2 人工闸门确认
+- 状态：PASS WITH NOTES，用户已确认保持模板并进入 Stage 3
 - 开始时间：2026-09-04
 - 完成时间：2026-09-04
 - 执行人：Codex
-- Git 提交：尚未提交
+- Git 提交：`3b9dc22`（`feat: 完成博客 Stage 2 内容模型与 P0 页面`）
 - 部署地址：无（本阶段仅本地 MVP）
 
 ### 已执行任务
@@ -222,9 +222,58 @@ Playwright 覆盖：全部 P0 路由状态码、博客/项目/文档详情、PDF
 - 用户明确要求真实内容暂不替换，因此“3 篇真实文章、2 个真实项目、真实文档/视频/下载、真实简历和履历”未勾选；这些项目已移为 Stage 4 预发布阻塞条件。
 - 当前 `SITE_URL` 使用本地回退 `http://localhost:4321`；取得真实 pages.dev 地址后，Stage 4 必须设置 `SITE_URL` 并重新构建、检查 Sitemap/canonical 和预发布页面。
 - 未创建 Cloudflare Pages 项目，未执行提交或推送。
-- 阶段复审结论：PASS WITH NOTES。结构与功能证据齐全，等待用户打开本地 MVP 后确认是否进入 Stage 3。
+- 阶段复审结论：PASS WITH NOTES。结构与功能证据齐全；用户已确认保持模板并进入 Stage 3。
 
 ### 下一阶段
 
-- 是否允许进入：否，等待用户查看 MVP 并确认 Stage 2 闸门。
-- 待处理事项：启动本地服务供用户查看；确认后进入 Stage 3 视觉、媒体、响应式与无障碍优化。
+- 是否允许进入：是，用户已确认 Stage 2 闸门并进入 Stage 3。
+- 待处理事项：完成视觉、媒体、响应式与无障碍优化，等待 Stage 3 人工闸门。
+
+## Stage 3 - 视觉、媒体、响应式与无障碍
+
+- 状态：PASS WITH NOTES，等待用户人工查看和 Stage 3 闸门确认
+- 开始时间：2026-09-04
+- 完成时间：2026-09-04
+- 执行人：Codex
+- Git 提交：尚未提交
+- 部署地址：无（本阶段仅本地 MVP）
+
+### 已执行任务
+
+- [x] S3-01 建立统一视觉层，包括品牌标记、当前导航态、颜色层级、标题体系、按钮、卡片和页脚。
+- [x] S3-02 完成 360 x 800、768 x 1024、1440 x 900 三种视口的响应式布局与溢出检查。
+- [x] S3-03 为视频模板加入固定 16:9 预览占位，并保持下载和外链信息可读；真实媒体和授权审查后移 Stage 4。
+- [x] S3-04 完成跳到主要内容、唯一 H1、连续标题层级、键盘焦点、当前导航态和 reduced-motion 支持。
+- [x] S3-05 运行 `npm run check`、`npm run build` 和 Stage 3 Playwright 回归测试。
+- [x] 汇总 Stage 3 证据并更新项目文档和经验记录。
+
+### 实施内容
+
+- [x] `Header.astro` 增加品牌标记、辅助副标题、当前路径高亮和 `aria-current="page"`。
+- [x] `BaseLayout.astro` 增加主题色元数据，保持跳到主要内容链接和 canonical 结构。
+- [x] `global.css` 重做色彩、排版、首屏、卡片、状态标签、页脚、焦点样式、移动端导航和 reduced-motion 规则；移除首屏渐变，使用稳定的纯色背景。
+- [x] 首页增加站点概览指标和内容规范入口；视频模板增加固定比例预览占位。
+- [x] 新增 `site/tests/visual.spec.ts`，覆盖三种基准视口、所有 P0 信息架构页面、横向溢出、唯一 H1、标题层级、跳转链接、当前导航态、键盘焦点和 reduced-motion。
+
+### 自动验证与视觉复审
+
+```text
+npm run check：退出码 0；0 errors、0 warnings、0 hints。
+npm run build：退出码 0；生成 16 个静态页面及 RSS、robots、Sitemap 和下载资源。
+npm run test:e2e：退出码 0；desktop-chromium 与 mobile-chromium 共 12 项通过。
+git diff --check：PASS。
+```
+
+截图复审视口：1440 x 900、768 x 1024、360 x 800。结果：首屏层次、导航换行、按钮宽度、卡片密度和视频占位均符合当前模板内容范围，无非预期横向溢出。
+
+### 偏差、风险与阶段结论
+
+- 当前仍使用开发模板，没有真实项目截图、真实视频封面或真实下载媒体；这些内容及其授权在 Stage 4 处理。
+- 站点保持纯 Astro 静态架构，没有引入 React、FastAPI 或运行时后端。
+- 未创建 Cloudflare Pages 项目，未执行 Stage 3 提交或推送。
+- 阶段复审结论：PASS WITH NOTES。自动检查和截图复审通过，等待用户人工体验确认后再进入 Stage 4。
+
+### 下一阶段
+
+- 是否允许进入：否，等待用户查看 Stage 3 更新后的本地 MVP 并确认闸门。
+- 待处理事项：保持开发服务可访问；确认后进入 Stage 4 质量、安全与预发布检查。

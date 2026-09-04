@@ -13,6 +13,10 @@ const videos = await getCollection('videos');
     <div class="card-grid">
       {videos.map((video) => (
         <article class="card">
+          <div class="media-placeholder" role="img" aria-label="演示视频预览占位">
+            <span>VIDEO / PREVIEW</span>
+            <strong>开发阶段占位</strong>
+          </div>
           <p class="card-meta">{video.data.platform} · 关联项目：{video.data.projectSlug}</p>
           <h2>{video.data.title}</h2>
           <p>{video.data.summary}</p>

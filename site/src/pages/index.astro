@@ -13,18 +13,25 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
 <BaseLayout title="首页">
   <section class="hero">
     <div class="container hero-grid">
-      <div>
-        <p class="eyebrow">个人博客模板 · Stage 2</p>
+      <div class="hero-copy">
+        <p class="eyebrow">Personal Engineering Notes · 03</p>
         <h1>{siteConfig.name}</h1>
         <p class="lede">记录学习笔记、技术文档和个人工程实践，把过程整理成可阅读、可复现的公开内容。</p>
         <div class="hero-actions">
           <a class="button" href="/blog/">阅读博客</a>
           <a class="button secondary" href="/projects/">查看项目</a>
         </div>
+        <div class="hero-metrics" aria-label="站点概览">
+          <div><strong>05</strong><span>内容集合</span></div>
+          <div><strong>09</strong><span>导航入口</span></div>
+          <div><strong>01</strong><span>维护方式</span></div>
+        </div>
       </div>
       <div class="hero-aside">
-        <p><strong>当前版本</strong></p>
+        <p class="panel-label">CURRENT BUILD</p>
+        <p class="panel-title">Stage 2 / MVP</p>
         <p>内容结构和 P0 路由已建立。页面中的条目是开发模板，发布前会替换为经过审查的真实资料。</p>
+        <a class="text-link" href="/docs/">查看内容规范 <span aria-hidden="true">↗</span></a>
       </div>
     </div>
   </section>
@@ -32,7 +39,7 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
   <div class="container">
     <TemplateNotice />
     <section class="section" aria-labelledby="featured-projects">
-      <div class="section-heading"><h2 id="featured-projects">精选项目</h2><a href="/projects/">全部项目</a></div>
+      <div class="section-heading"><div><p class="section-kicker">01 / WORK</p><h2 id="featured-projects">精选项目</h2></div><a class="text-link" href="/projects/">全部项目 <span aria-hidden="true">↗</span></a></div>
       <div class="card-grid">
         {projects.map((project) => (
           <article class="card">
@@ -48,7 +55,7 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
     </section>
 
     <section class="section" aria-labelledby="latest-posts">
-      <div class="section-heading"><h2 id="latest-posts">最新文章</h2><a href="/blog/">全部文章</a></div>
+      <div class="section-heading"><div><p class="section-kicker">02 / NOTES</p><h2 id="latest-posts">最新文章</h2></div><a class="text-link" href="/blog/">全部文章 <span aria-hidden="true">↗</span></a></div>
       <div class="card-grid">
         {posts.map((post) => (
           <article class="card">
@@ -64,7 +71,7 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
     </section>
 
     <section class="section" aria-labelledby="quick-links">
-      <div class="section-heading"><h2 id="quick-links">快速入口</h2></div>
+      <div class="section-heading"><div><p class="section-kicker">03 / INDEX</p><h2 id="quick-links">快速入口</h2></div></div>
       <div class="card-grid">
         <article class="card"><h3><a href="/resume/">网页版简历</a></h3><p>查看结构化摘要和模板 PDF 下载入口。</p></article>
         <article class="card"><h3><a href="/docs/">技术文档</a></h3><p>按版本和更新时间整理的文档目录。</p></article>
