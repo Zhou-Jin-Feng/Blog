@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TemplateNotice from '../../components/TemplateNotice.astro';
+
+const downloads = (await getCollection('downloads')).sort((a, b) => b.data.updatedDate.valueOf() - a.data.updatedDate.valueOf());
+---
+
+<BaseLayout title="下载" description="公开下载资料、文件类型、大小和版本信息。">
+  <div class="container page-shell">
+    <header class="page-header"><p class="eyebrow">Downloads</p><h1>下载</h1><p class="lede">每个文件都应在公开前完成来源、授权和脱敏检查。</p></header>
+    <TemplateNotice />
+    <div class="card-grid">
+      {downloads.map((item) => (
+        <article class="card">
+          <p class="card-meta">{item.data.fileType} · {item.data.fileSize} · {item.data.version}</p>
+          <h2>{item.data.title}</h2><p>{item.data.summary}</p>
+          <p class="card-meta">更新时间：<time datetime={item.data.updatedDate.toISOString()}>{item.data.updatedDate.toLocaleDateString('zh-CN')}</time></p>
+          {item.data.template && <TemplateNotice compact />}
+          <p><a class="button" href={item.data.downloadUrl} download>下载文件</a></p>
+        </article>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

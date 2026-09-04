@@ -1,0 +1,26 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TemplateNotice from '../../components/TemplateNotice.astro';
+
+type Props = { doc: CollectionEntry<'docs'> };
+
+export async function getStaticPaths() {
+  const docs = await getCollection('docs');
+  return docs.map((doc) => ({ params: { slug: doc.id }, props: { doc } }));
+}
+
+const { doc } = Astro.props as Props;
+const { Content } = await render(doc);
+---
+
+<BaseLayout title={doc.data.title} description={doc.data.summary}>
+  <div class="container page-shell">
+    <article class="prose">
+      <header class="detail-header"><p class="eyebrow">Docs</p><h1>{doc.data.title}</h1><p class="card-meta">{doc.data.version} · <time datetime={doc.data.updatedDate.toISOString()}>{doc.data.updatedDate.toLocaleDateString('zh-CN')}</time></p></header>
+      {doc.data.template && <TemplateNotice />}
+      <Content />
+      <p><a href="/docs/">返回文档列表</a></p>
+    </article>
+  </div>
+</BaseLayout>

@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TemplateNotice from '../../components/TemplateNotice.astro';
+import { siteConfig } from '../../data/site';
+---
+
+<BaseLayout title="关于" description="个人介绍、技术方向和公开联系方式。">
+  <div class="container page-shell">
+    <header class="page-header"><p class="eyebrow">About</p><h1>关于</h1><p class="lede">这里是个人介绍、技术方向和公开联系方式的入口。</p></header>
+    <TemplateNotice />
+    <section class="prose">
+      <h2>个人介绍</h2>
+      <p>这里替换为真实的个人介绍、学习方向和工程实践范围。</p>
+      <h2>技术方向</h2>
+      <p>这里替换为经过项目验证的技术栈、关注的问题和持续学习计划。</p>
+      <h2>公开联系方式</h2>
+      <p><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></p>
+      <p><a href={siteConfig.githubUrl} target="_blank" rel="noreferrer">GitHub 主页</a></p>
+    </section>
+  </div>
+</BaseLayout>

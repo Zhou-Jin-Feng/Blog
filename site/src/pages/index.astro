@@ -1,17 +1,75 @@
 ---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TemplateNotice from '../components/TemplateNotice.astro';
+import { siteConfig } from '../data/site';
 
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
+  .slice(0, 3);
+const projects = (await getCollection('projects', ({ data }) => data.featured)).slice(0, 2);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout title="首页">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">个人博客模板 · Stage 2</p>
+        <h1>{siteConfig.name}</h1>
+        <p class="lede">记录学习笔记、技术文档和个人工程实践，把过程整理成可阅读、可复现的公开内容。</p>
+        <div class="hero-actions">
+          <a class="button" href="/blog/">阅读博客</a>
+          <a class="button secondary" href="/projects/">查看项目</a>
+        </div>
+      </div>
+      <div class="hero-aside">
+        <p><strong>当前版本</strong></p>
+        <p>内容结构和 P0 路由已建立。页面中的条目是开发模板，发布前会替换为经过审查的真实资料。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <TemplateNotice />
+    <section class="section" aria-labelledby="featured-projects">
+      <div class="section-heading"><h2 id="featured-projects">精选项目</h2><a href="/projects/">全部项目</a></div>
+      <div class="card-grid">
+        {projects.map((project) => (
+          <article class="card">
+            <p class="card-meta"><span class="status">{project.data.status}</span></p>
+            <h3><a href={`/projects/${project.id}/`}>{project.data.title}</a></h3>
+            <p>{project.data.summary}</p>
+            <ul class="tag-list" aria-label="技术栈">
+              {project.data.techStack.map((tech) => <li class="tag">{tech}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="latest-posts">
+      <div class="section-heading"><h2 id="latest-posts">最新文章</h2><a href="/blog/">全部文章</a></div>
+      <div class="card-grid">
+        {posts.map((post) => (
+          <article class="card">
+            <p class="card-meta"><time datetime={post.data.publishDate.toISOString()}>{post.data.publishDate.toLocaleDateString('zh-CN')}</time></p>
+            <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+            <p>{post.data.description}</p>
+            <ul class="tag-list" aria-label="文章标签">
+              {post.data.tags.map((tag) => <li class="tag">{tag}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="quick-links">
+      <div class="section-heading"><h2 id="quick-links">快速入口</h2></div>
+      <div class="card-grid">
+        <article class="card"><h3><a href="/resume/">网页版简历</a></h3><p>查看结构化摘要和模板 PDF 下载入口。</p></article>
+        <article class="card"><h3><a href="/docs/">技术文档</a></h3><p>按版本和更新时间整理的文档目录。</p></article>
+        <article class="card"><h3><a href="/about/">关于与联系</a></h3><p>了解公开方向，并通过邮箱联系。</p></article>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

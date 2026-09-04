@@ -1,0 +1,33 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TemplateNotice from '../../components/TemplateNotice.astro';
+
+type Props = { project: CollectionEntry<'projects'> };
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props as Props;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={project.data.title} description={project.data.summary}>
+  <div class="container page-shell">
+    <article class="prose">
+      <header class="detail-header"><p class="eyebrow">Project</p><h1>{project.data.title}</h1><p class="card-meta"><span class="status">{project.data.status}</span></p><p class="lede">{project.data.summary}</p></header>
+      {project.data.template && <TemplateNotice />}
+      <p><strong>本人贡献：</strong>{project.data.role}</p>
+      <ul class="stack" aria-label="技术栈">{project.data.techStack.map((tech) => <li>{tech}</li>)}</ul>
+      <Content />
+      <nav class="detail-links" aria-label="项目相关链接">
+        {project.data.repoUrl && <a class="button secondary" href={project.data.repoUrl}>代码仓库</a>}
+        {project.data.demoUrl && <a class="button secondary" href={project.data.demoUrl}>在线 Demo</a>}
+        {project.data.videoUrl && <a class="button secondary" href={project.data.videoUrl}>演示视频</a>}
+        <a class="button" href="/projects/">返回项目列表</a>
+      </nav>
+    </article>
+  </div>
+</BaseLayout>

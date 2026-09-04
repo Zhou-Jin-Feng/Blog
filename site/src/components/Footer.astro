@@ -1,0 +1,10 @@
+---
+import { siteConfig } from '../data/site';
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p>© {new Date().getFullYear()} {siteConfig.name}</p>
+    <p><a href="/rss.xml">RSS</a> · <a href="/sitemap-index.xml">Sitemap</a> · <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></p>
+  </div>
+</footer>

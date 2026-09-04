@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TemplateNotice from '../../components/TemplateNotice.astro';
+import { timelineItems } from '../../data/site';
+---
+
+<BaseLayout title="履历" description="教育、项目与实践经历时间线。">
+  <div class="container page-shell">
+    <header class="page-header"><p class="eyebrow">Timeline</p><h1>履历</h1><p class="lede">按时间整理教育、项目和实践经历，与简历摘要互补。</p></header>
+    <TemplateNotice />
+    <section class="timeline" aria-label="经历时间线">
+      {timelineItems.map((item) => (
+        <article class="timeline-item">
+          <p class="period">{item.period}</p>
+          <p class="card-meta">{item.type}</p>
+          <h2>{item.title}</h2>
+          <p>{item.description}</p>
+          <p><strong>成果或职责：</strong>{item.result}</p>
+        </article>
+      ))}
+    </section>
+  </div>
+</BaseLayout>

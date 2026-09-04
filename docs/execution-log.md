@@ -112,7 +112,7 @@ Stage 0 未执行上述命令；Stage 1 已按批准路线完成配置。
 
 ## Stage 1 - 仓库与 Astro 基线
 
-- 状态：PASS，等待用户人工闸门确认
+- 状态：PASS，用户已确认进入 Stage 2
 - 开始时间：2026-09-04
 - 完成时间：2026-09-04 15:21（Asia/Shanghai）
 - 执行人：Codex
@@ -125,7 +125,7 @@ Stage 0 未执行上述命令；Stage 1 已按批准路线完成配置。
 - [x] S1-02 创建 Astro Minimal + TypeScript Strict 项目并安装首版依赖。
 - [x] S1-03 建立 CI、Playwright 和稳定 npm 脚本。
 - [x] S1-04 验证本地运行、检查、生产构建和冒烟测试。
-- [x] 汇总 Stage 1 证据并等待用户闸门确认。
+- [x] 汇总 Stage 1 证据并通过用户人工闸门。
 
 ### S1-01 验证证据
 
@@ -168,16 +168,63 @@ npm run test:e2e：退出码 0；4 passed（desktop-chromium/mobile-chromium 各
 
 ### Stage 1 偏差、风险与结论
 
-- `@astrojs/sitemap` 需要真实生产 `site` URL 才能生成绝对地址。当前 `astro.config.mjs`
-  通过 `SITE_URL` 环境变量条件启用 Sitemap；Stage 1 未猜测 pages.dev 项目名，因此默认构建
-  不生成 Sitemap。Stage 4 首次创建 Pages 项目并取得真实地址后，必须设置 `SITE_URL`，复跑
-  `npm run build` 和预发布检查。
+- `@astrojs/sitemap` 需要绝对站点 URL。当前 `astro.config.mjs` 使用 `SITE_URL` 或
+  `http://localhost:4321` 回退值配置站点地址，本地构建会生成指向回退地址的 Sitemap。
+  Stage 4 首次创建 Pages 项目并取得真实地址后，必须设置 `SITE_URL`，复跑构建和预发布检查。
 - 首版首页仍是 Astro Minimal 英文基线页；真实中文内容、P0 路由、简历和脱敏 PDF 按计划留在
   Stage 2/Stage 4，不将占位内容伪装为真实内容。
 - 本阶段未执行 `git commit`、`git push`，未创建 Cloudflare Pages 项目，符合当前授权边界。
-- 阶段复审结论：PASS（自动检查和本地基线验证通过），等待用户人工确认后进入 Stage 2。
+- 阶段复审结论：PASS（自动检查和本地基线验证通过），用户已确认进入 Stage 2。
 
 ### 下一阶段
 
-- 是否允许进入：否，等待用户确认 Stage 1 闸门。
-- 待处理事项：用户确认后执行 Stage 2 的内容模型与 P0 页面。
+- 是否允许进入：是，用户已确认 Stage 1 闸门。
+- 待处理事项：执行 Stage 2 的内容模型与 P0 页面。
+
+## Stage 2 - 内容模型与 P0 页面
+
+- 状态：PASS WITH NOTES，等待用户查看 MVP 和 Stage 2 人工闸门确认
+- 开始时间：2026-09-04
+- 完成时间：2026-09-04
+- 执行人：Codex
+- Git 提交：尚未提交
+- 部署地址：无（本阶段仅本地 MVP）
+
+### 已执行任务
+
+- [x] S2-01 固定信息架构并实现主导航及 P0 路由。
+- [x] S2-02 使用 Astro Content Collections API 建立五个内容集合和字段校验。
+- [x] S2-03 完成首页、列表页、详情页、简历、履历、关于、404、RSS、Sitemap、robots 和下载资源。
+- [x] S2-04 按用户决定使用明确标注的模板内容；真实内容替换移至 Stage 4。
+- [x] S2-05 完成首页精选内容、模板提示、响应式基础布局和内部导航。
+- [x] S2-06 完成静态检查、生产构建和 Playwright 回归测试。
+- [x] 汇总 Stage 2 证据并更新项目文档和经验记录。
+
+### 实施证据
+
+- 内容集合：`site/src/content.config.ts` 定义 `blog`、`projects`、`docs`、`videos`、`downloads`，对必填字段、日期、标签数量和状态枚举进行校验。
+- 模板内容：3 篇博客（含 1 篇草稿）、2 个项目、1 份文档、1 个视频、1 个下载条目；所有公开模板页面均显示开发占位提示。
+- P0 路由：`/`、`/blog/`、`/projects/`、`/docs/`、`/video/`、`/downloads/`、`/resume/`、`/timeline/`、`/about/`、`/404.html`、`/rss.xml`、`/sitemap-index.xml`、`/robots.txt`，并实现博客、项目、文档详情页。
+- 下载资源：`site/public/downloads/resume-template.pdf` 和项目报告 Markdown 模板均可访问；PDF 已完成元数据、文本提取和 PNG 渲染检查。
+
+### 自动验证
+
+```text
+npm run check：退出码 0；0 errors、0 warnings、0 hints。
+npm run build：退出码 0；生成全部列表/详情页、404、RSS、robots、Sitemap 和下载资源。
+npm run test:e2e：退出码 0；desktop-chromium 与 mobile-chromium 共 8 项通过。
+```
+
+Playwright 覆盖：全部 P0 路由状态码、博客/项目/文档详情、PDF 与 Markdown 下载、草稿不进入列表/RSS/Sitemap、草稿详情返回 404、主导航完整性和浏览器错误。
+
+### 偏差、风险与阶段结论
+
+- 用户明确要求真实内容暂不替换，因此“3 篇真实文章、2 个真实项目、真实文档/视频/下载、真实简历和履历”未勾选；这些项目已移为 Stage 4 预发布阻塞条件。
+- 当前 `SITE_URL` 使用本地回退 `http://localhost:4321`；取得真实 pages.dev 地址后，Stage 4 必须设置 `SITE_URL` 并重新构建、检查 Sitemap/canonical 和预发布页面。
+- 未创建 Cloudflare Pages 项目，未执行提交或推送。
+- 阶段复审结论：PASS WITH NOTES。结构与功能证据齐全，等待用户打开本地 MVP 后确认是否进入 Stage 3。
+
+### 下一阶段
+
+- 是否允许进入：否，等待用户查看 MVP 并确认 Stage 2 闸门。
+- 待处理事项：启动本地服务供用户查看；确认后进入 Stage 3 视觉、媒体、响应式与无障碍优化。

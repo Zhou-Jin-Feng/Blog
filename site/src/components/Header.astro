@@ -1,0 +1,16 @@
+---
+import { navItems, siteConfig } from '../data/site';
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label={`${siteConfig.name}首页`}>{siteConfig.name}</a>
+    <nav aria-label="主导航">
+      <ul class="nav-list">
+        {navItems.map((item) => (
+          <li><a href={item.href}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>

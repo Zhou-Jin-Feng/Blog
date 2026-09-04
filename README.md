@@ -2,7 +2,7 @@
 
 这是一个以中文内容为主的个人博客项目，用于公开展示学习笔记、技术文档、个人工程实践项目、Demo、演示视频和可下载资料。
 
-当前处于 **Stage 1：仓库与 Astro 基线已完成，等待人工闸门确认**。尚未执行 Git 提交或推送，也未创建 Cloudflare Pages 项目。
+当前处于 **Stage 2：内容模型与 P0 页面已完成自动验收，等待用户查看本地 MVP 和人工闸门确认**。尚未执行 Stage 2 的 Git 提交或推送，也未创建 Cloudflare Pages 项目。
 
 目标远端仓库：`https://github.com/Zhou-Jin-Feng/Blog.git`（本地 `origin` 已配置，仓库保持私有）。
 
@@ -20,11 +20,12 @@
 
 按手册顺序推进：
 
-1. Stage 1：仓库与 Astro 基线。
-2. Stage 2：内容模型与 P0 页面。
-3. Stage 3：视觉、媒体、响应式与无障碍。
-4. Stage 4：质量、安全与预发布。
-5. Stage 5：正式发布、回滚与维护交接。
+1. Stage 0：决策、环境、内容和隐私准备（已通过）。
+2. Stage 1：仓库与 Astro 基线（已通过）。
+3. Stage 2：内容模型与 P0 页面（当前，模板内容已完成，等待人工查看）。
+4. Stage 3：视觉、媒体、响应式与无障碍。
+5. Stage 4：质量、安全与预发布。
+6. Stage 5：正式发布、回滚与维护交接。
 
 ## 本地开发与验证
 
@@ -38,8 +39,8 @@ npm run build
 npm run test:e2e
 ```
 
-Playwright 测试会使用生产构建并自动启动本地预览。Sitemap 仅在构建环境提供真实的
-`SITE_URL` 后生成，避免在部署地址确定前写入错误的 canonical URL。
+Playwright 测试会使用生产构建并自动启动本地预览。未设置 `SITE_URL` 时，Sitemap 和
+canonical 使用 `http://localhost:4321` 回退地址；部署前必须设置真实的 pages.dev 地址。
 
 ## 部署入口
 
