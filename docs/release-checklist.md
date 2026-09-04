@@ -4,8 +4,9 @@
 
 ## 预发布
 
-- [ ] 已将 `docs/content-inventory.md` 中的占位模板全部替换为达到最低数量的真实内容。
-- [ ] 真实内容已按 `docs/privacy-review.md` 完成自动扫描、人工复核和必要脱敏。
+- [ ] 已将 `docs/content-inventory.md` 中的占位模板全部替换为达到最低数量的真实内容（用户已明确后置）。
+- [ ] 真实内容已按 `docs/privacy-review.md` 完成自动扫描、人工复核和必要脱敏（用户已明确后置）。
+- [x] 用户已明确接受模板先用于 Stage 4 工程推进，阶段结论记录为 PASS WITH NOTES。
 - [x] `npm ci` 成功（模板依赖安装，0 vulnerabilities）。
 - [x] `npm run check` 通过。
 - [x] `npm run build` 通过并生成 `site/dist`。
@@ -21,8 +22,9 @@
 
 ## 正式发布
 
-- [ ] P0 页面和资源数量达标。
-- [ ] 真实内容和公开授权审查通过。
+- [ ] 模板工程版 P0 页面和资源可访问，并持续显示模板标识。
+- [ ] 当前模板资源的公开检查通过。
+- [ ] 真实内容数量和公开授权审查通过（用户已明确后置，不阻塞模板工程版）。
 - [ ] 生产地址使用 HTTPS。
 - [ ] GitHub 与 Cloudflare 账号已启用双因素认证。
 - [ ] 生产部署 ID、Git 提交 ID 和发布日期已记录。
@@ -32,4 +34,4 @@
 
 ## 当前状态
 
-Stage 0、Stage 1、Stage 2 和 Stage 3 已通过；当前处于 Stage 4，本地质量与安全检查已完成，但真实内容替换、最终脱敏和授权复核仍使预发布保持 BLOCKED。
+Stage 0 至 Stage 3 已通过；Stage 4 在模板范围内为 PASS WITH NOTES；Stage 5 已获准开始。真实内容替换、最终脱敏和授权复核已按用户决定后置；线上部署、备份和回滚仍待执行。
