@@ -116,7 +116,7 @@ Stage 0 未执行上述命令；Stage 1 已按批准路线完成配置。
 - 开始时间：2026-09-04
 - 完成时间：2026-09-04 15:21（Asia/Shanghai）
 - 执行人：Codex
-- Git 提交：尚未提交
+- Git 提交：`b24be83`（`feat: 完成博客 Stage 1 基线建设`）
 - 部署地址：无
 
 ### 已执行任务
@@ -231,11 +231,11 @@ Playwright 覆盖：全部 P0 路由状态码、博客/项目/文档详情、PDF
 
 ## Stage 3 - 视觉、媒体、响应式与无障碍
 
-- 状态：PASS WITH NOTES，等待用户人工查看和 Stage 3 闸门确认
+- 状态：PASS WITH NOTES，用户已确认保持当前 UI 并进入 Stage 4
 - 开始时间：2026-09-04
 - 完成时间：2026-09-04
 - 执行人：Codex
-- Git 提交：尚未提交
+- Git 提交：`93e31f1`（`feat: 完成博客 Stage 3 视觉与无障碍优化`）
 - 部署地址：无（本阶段仅本地 MVP）
 
 ### 已执行任务
@@ -271,9 +271,49 @@ git diff --check：PASS。
 - 当前仍使用开发模板，没有真实项目截图、真实视频封面或真实下载媒体；这些内容及其授权在 Stage 4 处理。
 - 站点保持纯 Astro 静态架构，没有引入 React、FastAPI 或运行时后端。
 - 未创建 Cloudflare Pages 项目，未执行 Stage 3 提交或推送。
-- 阶段复审结论：PASS WITH NOTES。自动检查和截图复审通过，等待用户人工体验确认后再进入 Stage 4。
+- 阶段复审结论：PASS WITH NOTES。自动检查和截图复审通过；用户已确认保持当前 UI 并进入 Stage 4。
 
 ### 下一阶段
 
-- 是否允许进入：否，等待用户查看 Stage 3 更新后的本地 MVP 并确认闸门。
-- 待处理事项：保持开发服务可访问；确认后进入 Stage 4 质量、安全与预发布检查。
+- 是否允许进入：是，用户已确认 Stage 3 闸门并进入 Stage 4。
+- 待处理事项：执行 Stage 4 质量、安全与预发布检查。
+
+## Stage 4 - 质量、安全与预发布
+
+- 状态：BLOCKED，真实内容、最终脱敏和授权材料缺失
+- 开始时间：2026-09-04
+- 当前记录时间：2026-09-04 18:07（Asia/Shanghai）
+- 执行人：Codex
+- Git 提交：尚未提交
+- 部署地址：无（未创建 Cloudflare Pages 项目）
+
+### 阶段范围与阻塞
+
+- [ ] S4-00 真实文章、项目、文档、视频、下载、个人介绍、简历和履历尚未提供；按执行手册保持 BLOCKED。
+- [ ] 真实内容的隐私、授权、元数据和本人贡献复核尚未执行。
+- [ ] 未创建公开预发布或正式发布，避免模板内容被误认为真实首发资料。
+
+### 已完成的本地子项
+
+- [x] S4-01 运行 `npm ci`，安装 281 个依赖并审计 0 vulnerabilities；`npm run check` 通过（0 errors、0 warnings、0 hints）；`npm run build` 通过并生成 16 个静态页面、RSS、robots、Sitemap 和 `_headers`。
+- [x] S4-02 使用生产预览运行 `npm run test:e2e`，desktop-chromium 与 mobile-chromium 共 12 项通过。
+- [x] S4-03 运行凭据模式扫描；命中仅为执行手册中的 `ghp_`、`github_pat_` 规则示例。高风险文件名扫描为 0。
+- [x] S4-03 使用 `pdfinfo` 和 `pdftotext` 复核 `site/public/downloads/resume-template.pdf`；模板元数据明确为占位文件，文本未命中邮箱、手机号、身份证、住址、API、key、password 或 secret 模式。
+- [x] S4-04 创建 `site/public/_headers`，包含 `nosniff`、严格来源策略、权限策略和 `SAMEORIGIN`，并确认构建后存在 `site/dist/_headers`。
+- [x] `git diff --check` 通过。
+
+### 未执行项与原因
+
+- 清理 `site/node_modules` 的命令被当前安全策略拒绝，未执行删除；随后直接运行 `npm ci` 成功，不绕过安全策略。
+- 未设置真实 `SITE_URL`，因此不能验证生产 canonical、Sitemap 地址和线上 SEO。
+- 未创建 Cloudflare Pages 项目，因真实内容和最终审查未完成，且尚未取得本阶段部署授权。
+- 未执行线上安全响应头、HTTPS、Lighthouse 和真实媒体检查。
+
+### 阶段结论
+
+BLOCKED。所有不依赖真实资料的本地质量与安全子项已通过；真实内容、最终脱敏、授权复核和 Pages 线上验证仍是 Stage 4 必须完成的阻塞项。
+
+### 下一阶段
+
+- 是否允许进入：否，等待真实内容和用户后续安排。
+- 待处理事项：补齐 S4-00 后重新扫描、构建和测试，再取得 pages.dev 地址进行预发布检查。

@@ -1,6 +1,6 @@
 # 个人博客站点
 
-本目录是个人博客的 Astro 静态站点。当前已完成 Stage 2 的内容模型、模板内容和 P0 页面，以及 Stage 3 的视觉、响应式与无障碍基线；真实内容将在 Stage 4 预发布前替换。
+本目录是个人博客的 Astro 静态站点。当前已完成 Stage 2 的内容模型、模板内容和 P0 页面，以及 Stage 3 的视觉、响应式与无障碍基线；Stage 4 正在进行本地质量检查，真实内容将在预发布前替换。
 
 ## 命令
 
@@ -25,4 +25,4 @@ astro.config.mjs        Astro 与集成配置
 playwright.config.ts    浏览器测试配置
 ```
 
-未设置 `SITE_URL` 时，生产构建使用 `http://localhost:4321` 作为 Sitemap 和 canonical 的回退地址；首次部署前必须设置真实的 pages.dev URL。
+未设置 `SITE_URL` 时，生产构建使用 `http://localhost:4321` 作为 Sitemap 和 canonical 的回退地址；首次部署前必须设置真实的 pages.dev URL。`public/_headers` 提供 Cloudflare Pages 基础安全响应头。
