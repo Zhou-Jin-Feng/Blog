@@ -322,26 +322,58 @@ PASS WITH NOTES。所有模板范围的本地质量与安全子项已通过；�
 
 ## Stage 5 - 正式发布、回滚与维护
 
-- 状态：进行中，已取得 Stage 5 提交、推送和部署授权
+- 状态：PASS WITH NOTES；用户已确认最终人工闸门
 - 开始时间：2026-09-04 19:57（Asia/Shanghai）
+- 工程收尾时间：2026-09-05 11:28（Asia/Shanghai）
+- 最终闸门时间：2026-09-05 13:47（Asia/Shanghai）
 - 执行人：Codex
-- Git 提交：本阶段尚未提交
-- 部署地址：无
+- Git 提交：`b442f344d3dba8a0b51b716405a79d3a64a63e3c`（`docs: 记录博客模板工程版范围变更`）
+- 生产地址：`https://blog-4cr.pages.dev`
+- 当前生产部署：`73a307ce-f55e-43ce-a111-5c67a3d33dbf`
 
 ### 已执行任务
 
 - [x] S5-00 记录用户批准的模板工程版范围、Stage 4 PASS WITH NOTES 和真实内容后置风险。
 - [x] 将 Pages 部署、线上回归和 Lighthouse 从 Stage 4 未完成项明确移交到 Stage 5，未将其伪装为已验证。
+- [x] S5-01 提交并推送 `b442f34` 到私有仓库 `main`；远端引用核对一致。
+- [x] GitHub Actions `Site CI` 运行 `33876048959` 成功，校验提交为 `b442f34`。
+- [x] S5-02 创建 Cloudflare Pages 项目 `blog`，配置 Root directory=`site`、Build command=`npm run build`、Output directory=`dist`、`NODE_VERSION=22` 和 `SITE_URL=https://blog-4cr.pages.dev`。
+- [x] S5-03 完成线上 HTTPS、P0 路由、下载、RSS、Sitemap、canonical、Open Graph、robots、安全响应头和构建日志检查。
+- [x] S5-04 完成首页、文章详情和项目详情的移动端 Lighthouse 检查，原始 JSON 与摘要保存于 `docs/reports/lighthouse/`。
+- [x] S5-05 在仓库外创建备份 `Blog-backup-20260904-212452.bundle`；大小 129948 字节，`git bundle verify` 确认包含完整历史且 HEAD 为 `b442f34`。
+- [x] S5-06 对首个已验证部署执行 Cloudflare 平台重新部署，新部署成功且生产内容未变化。
+- [x] S5-07 更新 README、任务清单、发布清单、主执行手册、执行日志和私有维护记录。
 
-### 待执行任务
+### Cloudflare 连接与部署证据
 
-- [ ] 取得用户当次明确授权后提交并推送当前版本。
-- [ ] 创建 Cloudflare Pages 项目、设置真实 `SITE_URL` 并取得 `pages.dev` 地址。
-- [ ] 完成线上 HTTPS、路由、下载、SEO、响应头、Lighthouse 和构建日志检查。
-- [ ] 创建并验证 Git bundle 备份，演练回滚或重新部署流程。
-- [ ] 完成维护交接和 Stage 5 最终闸门。
-- [ ] 工程完工后替换真实内容，并重新执行隐私、授权、构建和发布检查。
+- 旧安装 `159066106` 已按用户确认卸载；`MonkeyCode-AI` 也已按用户明确要求移除。
+- 新的 Cloudflare GitHub App 安装 `159177358` 通过 Cloudflare 发起的有效回调完成，并限制为唯一仓库 `Zhou-Jin-Feng/Blog`。
+- 首次生产部署 ID 为 `a3fb5cd0-6fb5-4236-99d7-1373010d147a`，不可变地址为 `https://a3fb5cd0.blog-4cr.pages.dev`，来源为 `main@b442f34`。
+- 2026-09-05 11:24（Asia/Shanghai）在用户动作时确认后执行 `Retry deployment`；新部署 ID 为 `73a307ce-f55e-43ce-a111-5c67a3d33dbf`，不可变地址为 `https://73a307ce.blog-4cr.pages.dev`，状态 `success`，耗时 33 秒。
+- 重部署日志确认 Node.js `22.22.0`、npm `10.9.2`、0 vulnerabilities、Astro 静态构建成功，并继续部署提交 `b442f34`。
+
+### 线上验证证据
+
+- 生产地址及全部 P0 路由、RSS、Sitemap、robots 和模板 PDF 返回 200；未知路由返回 404。
+- 全站链接检查确认站内链接和本地下载资源返回 200；模板视频链接 `https://example.com/template-video` 返回 404，私有仓库链接对未授权访客返回 404。这两项按用户批准的模板内容后置决定保留为说明，不宣称外部资源可用。
+- `http://blog-4cr.pages.dev/` 返回 301 并跳转到 HTTPS。
+- 生产首页与新不可变部署首页响应正文一致；生产页面 canonical、Open Graph、RSS、Sitemap 和 robots 使用 `https://blog-4cr.pages.dev`，未发现 localhost 或 127.0.0.1 泄漏。
+- 线上响应头包含 `X-Content-Type-Options: nosniff`、`Referrer-Policy: strict-origin-when-cross-origin`、`Permissions-Policy` 和 `X-Frame-Options: SAMEORIGIN`；未返回 `Strict-Transport-Security`。
+- 393 x 852 移动端检查未发现横向溢出、console error 或 pageerror。
+- Lighthouse 13.4.1：主页 100/96/100/100，文章详情 99/96/100/100，项目详情 100/96/100/100（性能/可访问性/最佳实践/SEO）。
+
+### 已知说明与后置任务
+
+- Lighthouse 报告指出颜色对比度不足和品牌链接可见文字与可访问名称不完全匹配；文章详情还存在两个 H1。模板视频外链和私有仓库公开链接也不可供访客使用。当前不创建新提交或推送，问题记录到后续内容/UI 修订。
+- Cloudflare 构建提示 Node 22 已进入 LTS Maintenance；当前构建成功，但应在后续维护窗口评估升级到受 Astro 支持的更新偶数版本。
+- HSTS 未返回；pages.dev 的 HTTP 到 HTTPS 跳转有效，当前记录为非阻断说明。
+- [x] GitHub 与 Cloudflare 账号均已启用 2FA。Cloudflare 页面显示“移动双因素身份验证处于活动状态”并已添加 TOTP 方法；GitHub 2FA 由用户于 2026-09-05 明确确认。
+- [ ] 工程完工后替换真实内容，并重新执行隐私、授权、本人贡献、构建和发布检查。
 
 ### 当前边界
 
-用户于 2026-09-04 在上述边界已经明确记录后再次授权开始 Stage 5。本次授权用于当前私有仓库 `Zhou-Jin-Feng/Blog` 的提交、推送和 Cloudflare Pages 模板工程版部署，不包括购买域名或付费资源。
+提交 `b442f34` 及对应推送已在用户收紧边界前完成。用户最新要求为“做完 Stage 5 先不要 commit 和 push”，因此其后的部署验证、报告和文档更新只保留在本地工作区。本阶段未购买域名、未启用付费资源，也未创建新的提交或推送。
+
+### 阶段结论
+
+PASS WITH NOTES。模板工程版的构建、发布、站内功能、SEO、备份、重新部署能力和账号 2FA 均已验证或由用户明确确认；模板外链、可访问性、HSTS、Node 版本维护期、CSP 及真实内容后置项已有明确记录。用户于 2026-09-05 在完成 GitHub 和 Cloudflare 2FA 后明确确认继续，Stage 5 最终人工闸门通过。当前结论只适用于模板工程版，不代表真实内容版已完成最终公开审查。

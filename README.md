@@ -2,7 +2,7 @@
 
 这是一个以中文内容为主的个人博客项目，用于公开展示学习笔记、技术文档、个人工程实践项目、Demo、演示视频和可下载资料。
 
-当前处于 **Stage 5：模板工程版发布、回滚与维护收尾**。Stage 4 已按用户决定以 PASS WITH NOTES 通过；真实内容替换、最终脱敏和授权复核后置，尚未创建 Cloudflare Pages 项目。
+**Stage 5 已以 PASS WITH NOTES 通过最终人工闸门。** 模板工程版已部署到 Cloudflare Pages，并完成线上回归和平台重新部署演练；真实内容替换、最终脱敏和授权复核仍按用户决定后置。
 
 目标远端仓库：`https://github.com/Zhou-Jin-Feng/Blog.git`（本地 `origin` 已配置，仓库保持私有）。
 
@@ -25,7 +25,7 @@
 3. Stage 2：内容模型与 P0 页面（已通过，模板内容保留）。
 4. Stage 3：视觉、媒体、响应式与无障碍（已通过，保留模板）。
 5. Stage 4：质量、安全与预发布（模板范围 PASS WITH NOTES）。
-6. Stage 5：正式发布、回滚与维护交接（当前）。
+6. Stage 5：模板工程版已上线并完成恢复演练（PASS WITH NOTES）。
 
 ## 本地开发与验证
 
@@ -40,13 +40,20 @@ npm run test:e2e
 ```
 
 Playwright 测试会使用生产构建并自动启动本地预览。未设置 `SITE_URL` 时，Sitemap 和
-canonical 使用 `http://localhost:4321` 回退地址；部署前必须设置真实的 pages.dev 地址。
+canonical 使用 `http://localhost:4321` 回退地址；Cloudflare Pages 生产环境已设置真实地址。
 
 ## 部署入口
 
-计划使用 GitHub 私有仓库连接 Cloudflare Pages，生产分支为 `main`，Root directory
-为 `site`，Build command 为 `npm run build`，Build output directory 为 `dist`。
-首次部署和 `SITE_URL` 配置已移交 Stage 5，当前尚未创建 Pages 项目。用户已明确允许先以模板推进工程完工；真实内容替换和最终审查仍需在最终公开内容前完成。
+生产地址：[https://blog-4cr.pages.dev](https://blog-4cr.pages.dev)。GitHub 私有仓库已连接
+Cloudflare Pages，生产分支为 `main`，Root directory 为 `site`，Build command 为
+`npm run build`，Build output directory 为 `dist`。生产环境使用 `NODE_VERSION=22` 和
+`SITE_URL=https://blog-4cr.pages.dev`。
+
+发布前先更新内容清单并完成隐私、授权和链接检查，再运行 `npm ci`、`npm run check`、
+`npm run build` 和 `npm run test:e2e`。取得当次明确授权后才可提交和推送；推送到 `main`
+会触发 Pages 自动部署。发布后检查生产地址、关键路由、下载、RSS、Sitemap、canonical、
+响应头和 Lighthouse。需要恢复时，优先在 Cloudflare Pages 对已验证提交执行重新部署；
+代码回退使用 `git revert`，不得对公开历史执行强制推送。
 
 ## 说明
 
