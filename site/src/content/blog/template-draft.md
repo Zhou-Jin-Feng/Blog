@@ -7,6 +7,4 @@ draft: true
 template: true
 ---
 
-# 模板草稿
-
 这篇内容用于自动验证 `draft: true` 不会进入公开页面、RSS 或 Sitemap。
