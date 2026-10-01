@@ -17,8 +17,15 @@ site/test-results/
 .DS_Store
 Thumbs.db
 
+# Logs
+*.log
+
 # Agent工作文件（不提交）
 agent/
 
 # Temporary artifact work files
 tmp/
+
+# Local tool output (Serena, Graphify)
+.serena/
+graphify-out/
