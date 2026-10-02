@@ -362,6 +362,80 @@ const payload = JSON.stringify({
       clearFocus();
     });
 
+    // 浏览器会把文字字形对齐到像素网格（垂直方向整像素跳），节点慢速漂移时标签会一顿一顿。
+    // 所以把标签栅格化成图片，随节点按小数坐标平移；图片会被插值，移动是连续的。
+    // 重绘期间先退回原生文字，保证主题切换的过渡快照里颜色正确。
+    const labels = nodeEls.flatMap((el) => {
+      const text = el.querySelector('text');
+      if (!text) return [];
+      const image = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+      image.setAttribute('class', 'label-sprite');
+      text.after(image);
+      return [{ text, image }];
+    });
+    let spriteJob = 0;
+    let spriteTimer = 0;
+
+    async function renderSprites() {
+      const job = ++spriteJob;
+      figure.classList.remove('use-sprites');
+      labels.forEach(({ image }) => image.removeAttribute('href'));
+      const matrix = svg.getScreenCTM();
+      if (!matrix) return;
+      const ratio = Math.hypot(matrix.a, matrix.b) * devicePixelRatio * 2;
+
+      const sprites = await Promise.all(
+        labels.map(async ({ text, image }) => {
+          const box = text.getBBox();
+          if (!box.width) return undefined;
+          const style = getComputedStyle(text);
+          const halo = parseFloat(style.strokeWidth) || 0;
+          const pad = halo / 2 + 2;
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.ceil((box.width + pad * 2) * ratio);
+          canvas.height = Math.ceil((box.height + pad * 2) * ratio);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return undefined;
+          ctx.scale(ratio, ratio);
+          ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = halo;
+          ctx.strokeStyle = style.stroke;
+          ctx.fillStyle = style.fill;
+          const baseline = pad + Number(text.getAttribute('y')) - box.y;
+          if (halo) ctx.strokeText(text.textContent ?? '', pad, baseline);
+          ctx.fillText(text.textContent ?? '', pad, baseline);
+          const url = canvas.toDataURL();
+          const preload = new Image();
+          preload.src = url;
+          await preload.decode().catch(() => undefined);
+          return { image, url, x: box.x - pad, y: box.y - pad, width: canvas.width / ratio, height: canvas.height / ratio };
+        }),
+      );
+      if (job !== spriteJob) return;
+      for (const sprite of sprites) {
+        if (!sprite) continue;
+        sprite.image.setAttribute('x', sprite.x.toFixed(3));
+        sprite.image.setAttribute('y', sprite.y.toFixed(3));
+        sprite.image.setAttribute('width', sprite.width.toFixed(3));
+        sprite.image.setAttribute('height', sprite.height.toFixed(3));
+        sprite.image.setAttribute('href', sprite.url);
+      }
+      // 等图片真正画上去再隐藏原生文字，避免出现一帧空白。
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (job === spriteJob) figure.classList.add('use-sprites');
+      }));
+    }
+
+    function scheduleSprites() {
+      window.clearTimeout(spriteTimer);
+      spriteTimer = window.setTimeout(renderSprites, 120);
+    }
+
+    const themeWatcher = new MutationObserver(() => renderSprites());
+    themeWatcher.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    document.fonts?.ready.then(scheduleSprites);
+
     // 窄屏隐藏标签文字，并把画布裁到节点范围，让节点尽量大。
     const fullViewBox = svg.getAttribute('viewBox')!;
     const xs = home.map((p) => p.x);
@@ -373,6 +447,7 @@ const payload = JSON.stringify({
       svg.setAttribute('viewBox', compact ? compactViewBox : fullViewBox);
       const scale = svg.clientWidth / svg.viewBox.baseVal.width || 1;
       figure.style.setProperty('--lk', String(1 / Math.pow(scale, 0.75)));
+      scheduleSprites();
     });
     resize.observe(svg);
 
@@ -388,7 +463,10 @@ const payload = JSON.stringify({
 
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(spriteTimer);
+      spriteJob += 1;
       cancelAnimationFrame(raf);
+      themeWatcher.disconnect();
       resize.disconnect();
       intersection.disconnect();
       cleanups.forEach((fn) => fn());

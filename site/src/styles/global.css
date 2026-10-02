@@ -164,6 +164,8 @@ button { font: inherit; }
 .graph text { fill: var(--muted); font-size: calc(11.5px * var(--lk, 1)); font-family: var(--font-sans); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
 .graph .node[data-kind="hub"] text { fill: var(--ink); font-size: calc(13.5px * var(--lk, 1)); font-weight: 800; }
 .graph.is-compact .node[data-kind="tag"] text { display: none; }
+.graph .label-sprite { pointer-events: none; }
+.graph.use-sprites text { visibility: hidden; }
 .graph svg.has-focus .node:not(.is-lit) { opacity: 0.16; }
 .graph svg.has-focus .link:not(.is-lit) { opacity: 0.1; }
 .graph .link.is-lit { stroke: var(--accent); stroke-width: 1.8; stroke-opacity: 1; }
@@ -444,6 +446,8 @@ html.theme-switching::view-transition-new(root) { animation: theme-reveal 0.6s c
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
   .card:hover, .card:focus-within, .pager-link:hover { transform: none; }
   .graph .node, .graph .link, .timeline::after, .timeline-item::before { animation: none !important; }
+  /* 星图标签按计算样式栅格化，不能让上面的全局过渡把切换主题后的颜色拖后一两帧。 */
+  .graph text { transition: none !important; }
   .read-progress, .site-header { animation-duration: auto !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
 }

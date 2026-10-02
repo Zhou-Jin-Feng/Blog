@@ -82,4 +82,28 @@ test.describe('Interactive enhancements', () => {
     await expect(legend).toHaveAttribute('aria-pressed', 'true');
     await expect(graph.locator('svg')).toHaveClass(/has-focus/);
   });
+
+  test('graph labels move as smooth sprites and re-render after a theme change', async ({ browser }) => {
+    // 减少动态效果时主题是同步切换的，最容易读到旧颜色，所以专门覆盖这种情况。
+    const context = await browser.newContext({ reducedMotion: 'reduce', colorScheme: 'light' });
+    const page = await context.newPage();
+    await page.goto('/');
+    const graph = page.locator('[data-graph]');
+    await expect(graph).toHaveClass(/use-sprites/);
+    const missing = await graph.locator('.node').evaluateAll((nodes) =>
+      nodes.filter((node) => {
+        const text = node.querySelector('text');
+        return text && getComputedStyle(text).display !== 'none' && !node.querySelector('.label-sprite')?.getAttribute('href');
+      }).length,
+    );
+    expect(missing).toBe(0);
+
+    const hubSprite = graph.locator('.node[data-kind="hub"] .label-sprite').first();
+    const before = await hubSprite.getAttribute('href');
+    await page.locator('[data-theme-toggle]').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect.poll(() => hubSprite.getAttribute('href')).not.toBe(before);
+    await expect(graph).toHaveClass(/use-sprites/);
+    await context.close();
+  });
 });
