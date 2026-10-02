@@ -2,22 +2,29 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import { formatDate } from '../../lib/format';
 
 const downloads = (await getCollection('downloads')).sort((a, b) => b.data.updatedDate.valueOf() - a.data.updatedDate.valueOf());
 ---
 
 <BaseLayout title="下载" description="公开下载资料、文件类型、大小和版本信息。">
   <div class="container page-shell">
-    <header class="page-header"><p class="eyebrow">Downloads</p><h1>下载</h1><p class="lede">每个文件都应在公开前完成来源、授权和脱敏检查。</p></header>
+    <header class="page-header"><h1>下载</h1><p class="lede">每个文件都应在公开前完成来源、授权和脱敏检查。</p></header>
     <TemplateNotice />
-    <div class="card-grid">
+    <div class="card-grid two-up">
       {downloads.map((item) => (
-        <article class="card">
-          <p class="card-meta">{item.data.fileType} · {item.data.fileSize} · {item.data.version}</p>
-          <h2>{item.data.title}</h2><p>{item.data.summary}</p>
-          <p class="card-meta">更新时间：<time datetime={item.data.updatedDate.toISOString()}>{item.data.updatedDate.toLocaleDateString('zh-CN')}</time></p>
+        <article class="card file-card">
+          <p class="file-type" aria-hidden="true">{item.data.fileType}</p>
+          <h2>{item.data.title}</h2>
+          <p>{item.data.summary}</p>
+          <dl class="facts">
+            <div><dt>格式</dt><dd>{item.data.fileType}</dd></div>
+            <div><dt>大小</dt><dd>{item.data.fileSize}</dd></div>
+            <div><dt>版本</dt><dd>{item.data.version}</dd></div>
+            <div><dt>更新</dt><dd><time datetime={item.data.updatedDate.toISOString()}>{formatDate(item.data.updatedDate)}</time></dd></div>
+          </dl>
           {item.data.template && <TemplateNotice compact />}
-          <p><a class="button" href={item.data.downloadUrl} download>下载文件</a></p>
+          <p class="card-actions"><a class="button" href={item.data.downloadUrl} download>下载文件</a></p>
         </article>
       ))}
     </div>

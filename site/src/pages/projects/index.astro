@@ -2,24 +2,17 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
 
 const projects = await getCollection('projects');
 ---
 
 <BaseLayout title="项目" description="个人工程实践项目、技术栈和本人贡献。">
   <div class="container page-shell">
-    <header class="page-header"><p class="eyebrow">Projects</p><h1>项目</h1><p class="lede">关注问题背景、本人贡献、可验证成果和限制条件。</p></header>
+    <header class="page-header"><h1>项目</h1><p class="lede">关注问题背景、本人贡献、可验证成果和限制条件。</p></header>
     <TemplateNotice />
-    <div class="card-grid">
-      {projects.map((project) => (
-        <article class="card">
-          <p class="card-meta"><span class="status">{project.data.status}</span></p>
-          <h2><a href={`/projects/${project.id}/`}>{project.data.title}</a></h2>
-          <p>{project.data.summary}</p>
-          <p><strong>本人贡献：</strong>{project.data.role}</p>
-          <ul class="tag-list" aria-label="技术栈">{project.data.techStack.map((tech) => <li class="tag">{tech}</li>)}</ul>
-        </article>
-      ))}
+    <div class="card-grid two-up">
+      {projects.map((project) => <ProjectCard project={project} showRole />)}
     </div>
   </div>
 </BaseLayout>

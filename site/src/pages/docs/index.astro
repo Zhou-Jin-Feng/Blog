@@ -2,19 +2,25 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import { formatDate } from '../../lib/format';
 
 const docs = (await getCollection('docs')).sort((a, b) => b.data.updatedDate.valueOf() - a.data.updatedDate.valueOf());
 ---
 
 <BaseLayout title="文档" description="按版本和更新时间整理的技术文档。">
   <div class="container page-shell">
-    <header class="page-header"><p class="eyebrow">Docs</p><h1>文档</h1><p class="lede">为长期维护准备的结构化文档目录。</p></header>
+    <header class="page-header"><h1>文档</h1><p class="lede">为长期维护准备的结构化文档目录。</p></header>
     <TemplateNotice />
-    <ul class="list">
+    <ul class="post-list">
       {docs.map((doc) => (
-        <li class="list-item">
-          <p class="card-meta">{doc.data.version} · <time datetime={doc.data.updatedDate.toISOString()}>{doc.data.updatedDate.toLocaleDateString('zh-CN')}</time></p>
-          <h2><a href={`/docs/${doc.id}/`}>{doc.data.title}</a></h2><p>{doc.data.summary}</p><p class="card-meta">来源：{doc.data.source}</p>
+        <li class="post-row">
+          <time class="post-date" datetime={doc.data.updatedDate.toISOString()}>{formatDate(doc.data.updatedDate)}</time>
+          <div class="post-main">
+            <h2 class="post-title" transition:name={`doc-${doc.id}`}><a href={`/docs/${doc.id}/`}>{doc.data.title}</a></h2>
+            <p class="post-summary">{doc.data.summary}</p>
+            <p class="doc-source">来源：{doc.data.source}</p>
+          </div>
+          <span class="post-length version">{doc.data.version}</span>
         </li>
       ))}
     </ul>

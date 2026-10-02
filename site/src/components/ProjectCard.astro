@@ -1,0 +1,19 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  headingLevel?: 'h2' | 'h3';
+  showRole?: boolean;
+}
+
+const { project, headingLevel: Heading = 'h2', showRole = false } = Astro.props;
+---
+
+<article class="card project-card">
+  <p class="card-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span></p>
+  <Heading transition:name={`project-${project.id}`}><a href={`/projects/${project.id}/`}>{project.data.title}</a></Heading>
+  <p>{project.data.summary}</p>
+  {showRole && <p class="project-role"><strong>本人贡献：</strong>{project.data.role}</p>}
+  <ul class="stack" aria-label="技术栈">{project.data.techStack.map((tech) => <li>{tech}</li>)}</ul>
+</article>

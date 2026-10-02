@@ -1,0 +1,64 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const items = Astro.props.headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+{items.length >= 2 && (
+  <nav class="toc" aria-label="本文目录" data-toc>
+    <p class="toc-title">本文目录</p>
+    <ol>
+      {items.map((heading) => (
+        <li class:list={[`toc-depth-${heading.depth}`]}>
+          <a href={`#${heading.slug}`}>{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}
+
+<script>
+  let observer: IntersectionObserver | undefined;
+
+  document.addEventListener('astro:page-load', () => {
+    observer?.disconnect();
+    const toc = document.querySelector<HTMLElement>('[data-toc]');
+    if (!toc) return;
+    const links = new Map<string, HTMLAnchorElement>();
+    toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((link) => links.set(decodeURIComponent(link.hash.slice(1)), link));
+    const headings = [...links.keys()].map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    const visible = new Set<string>();
+
+    const mark = (id: string | undefined) => {
+      links.forEach((link, key) => {
+        if (key === id) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        });
+        const first = headings.find((heading) => visible.has(heading.id));
+        if (first) {
+          mark(first.id);
+          return;
+        }
+        // 两个标题之间的长段落：取视口上方最近的一个。
+        const above = headings.filter((heading) => heading.getBoundingClientRect().top < 0).at(-1);
+        mark(above?.id ?? headings[0]?.id);
+      },
+      { rootMargin: '-72px 0px -55% 0px' },
+    );
+    headings.forEach((heading) => observer!.observe(heading));
+  });
+
+  document.addEventListener('astro:before-swap', () => observer?.disconnect());
+</script>

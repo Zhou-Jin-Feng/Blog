@@ -1,0 +1,238 @@
+---
+---
+
+<dialog class="palette" aria-label="站内搜索" data-palette>
+  <div class="palette-box">
+    <div class="palette-field">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+      <input
+        type="text"
+        role="combobox"
+        aria-expanded="true"
+        aria-controls="palette-results"
+        aria-autocomplete="list"
+        aria-label="搜索文章、项目和文档"
+        placeholder="搜索文章、项目、文档或标签"
+        autocomplete="off"
+        spellcheck="false"
+        data-palette-input
+      />
+      <button class="palette-close" type="button" data-palette-close>
+        <kbd>Esc</kbd><span class="visually-hidden">关闭搜索</span>
+      </button>
+    </div>
+    <ul class="palette-results" id="palette-results" role="listbox" aria-label="搜索结果" data-palette-results></ul>
+    <p class="palette-empty" data-palette-empty hidden>没有找到匹配的内容，换个关键词或标签试试。</p>
+    <p class="palette-foot" aria-hidden="true">
+      <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+      <span><kbd>Enter</kbd> 打开</span>
+      <span><kbd>Esc</kbd> 关闭</span>
+    </p>
+  </div>
+  <p class="visually-hidden" aria-live="polite" data-palette-status></p>
+</dialog>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+
+  type Entry = { type: string; title: string; summary: string; href: string; tags: string[]; date?: string };
+
+  let index: Promise<Entry[]> | undefined;
+  let results: Entry[] = [];
+  let active = 0;
+
+  const loadIndex = () => {
+    index ??= fetch('/search.json')
+      .then((response) => (response.ok ? response.json() : []))
+      .catch(() => {
+        index = undefined;
+        return [];
+      });
+    return index;
+  };
+
+  const els = () => {
+    const dialog = document.querySelector<HTMLDialogElement>('[data-palette]');
+    if (!dialog) return undefined;
+    return {
+      dialog,
+      input: dialog.querySelector<HTMLInputElement>('[data-palette-input]')!,
+      list: dialog.querySelector<HTMLUListElement>('[data-palette-results]')!,
+      empty: dialog.querySelector<HTMLElement>('[data-palette-empty]')!,
+      status: dialog.querySelector<HTMLElement>('[data-palette-status]')!,
+    };
+  };
+
+  function score(entry: Entry, terms: string[]) {
+    let total = 0;
+    const title = entry.title.toLowerCase();
+    const summary = entry.summary.toLowerCase();
+    const tags = entry.tags.map((tag) => tag.toLowerCase());
+    for (const term of terms) {
+      if (title.startsWith(term)) total += 14;
+      else if (title.includes(term)) total += 10;
+      else if (tags.some((tag) => tag.includes(term))) total += 7;
+      else if (summary.includes(term)) total += 4;
+      else if (entry.type.includes(term)) total += 2;
+      else return -1;
+    }
+    return total;
+  }
+
+  function highlight(text: string, terms: string[]) {
+    const fragment = document.createDocumentFragment();
+    if (!terms.length) {
+      fragment.append(text);
+      return fragment;
+    }
+    const lower = text.toLowerCase();
+    let cursor = 0;
+    while (cursor < text.length) {
+      let hit = -1;
+      let length = 0;
+      for (const term of terms) {
+        const at = lower.indexOf(term, cursor);
+        if (at !== -1 && (hit === -1 || at < hit)) {
+          hit = at;
+          length = term.length;
+        }
+      }
+      if (hit === -1) {
+        fragment.append(text.slice(cursor));
+        break;
+      }
+      fragment.append(text.slice(cursor, hit));
+      const mark = document.createElement('mark');
+      mark.textContent = text.slice(hit, hit + length);
+      fragment.append(mark);
+      cursor = hit + length;
+    }
+    return fragment;
+  }
+
+  async function update() {
+    const ui = els();
+    if (!ui) return;
+    const entries = await loadIndex();
+    const terms = ui.input.value.trim().toLowerCase().replace(/^#/, '').split(/\s+/).filter(Boolean);
+    results = terms.length
+      ? entries
+          .map((entry) => ({ entry, score: score(entry, terms) }))
+          .filter((item) => item.score >= 0)
+          .sort((a, b) => b.score - a.score)
+          .map((item) => item.entry)
+          .slice(0, 12)
+      : entries.filter((entry) => entry.type !== '页面').slice(0, 8);
+    active = 0;
+
+    ui.list.replaceChildren(
+      ...results.map((entry, i) => {
+        const item = document.createElement('li');
+        item.id = `palette-option-${i}`;
+        item.setAttribute('role', 'option');
+        const link = document.createElement('a');
+        link.href = entry.href;
+        link.tabIndex = -1;
+        const type = document.createElement('span');
+        type.className = 'option-type';
+        type.dataset.type = entry.type;
+        type.textContent = entry.type;
+        const body = document.createElement('span');
+        body.className = 'option-body';
+        const title = document.createElement('span');
+        title.className = 'option-title';
+        title.append(highlight(entry.title, terms));
+        const summary = document.createElement('span');
+        summary.className = 'option-summary';
+        summary.append(highlight(entry.summary, terms));
+        body.append(title, summary);
+        link.append(type, body);
+        if (entry.date) {
+          const date = document.createElement('time');
+          date.className = 'option-date';
+          date.textContent = entry.date;
+          link.append(date);
+        }
+        item.append(link);
+        item.addEventListener('pointermove', () => setActive(i));
+        return item;
+      }),
+    );
+    ui.empty.hidden = results.length > 0;
+    ui.status.textContent = terms.length ? `找到 ${results.length} 条结果` : '';
+    setActive(0);
+  }
+
+  function setActive(i: number) {
+    const ui = els();
+    if (!ui) return;
+    active = i;
+    const options = [...ui.list.querySelectorAll<HTMLElement>('[role="option"]')];
+    options.forEach((option, k) => option.setAttribute('aria-selected', String(k === i)));
+    const current = options[i];
+    ui.input.setAttribute('aria-activedescendant', current ? current.id : '');
+    current?.scrollIntoView({ block: 'nearest' });
+  }
+
+  function open() {
+    const ui = els();
+    if (!ui || ui.dialog.open) return;
+    ui.dialog.showModal();
+    ui.input.value = '';
+    ui.input.focus();
+    update();
+  }
+
+  function close() {
+    els()?.dialog.close();
+  }
+
+  document.addEventListener('keydown', (event) => {
+    const ui = els();
+    if (!ui) return;
+    const typing = (event.target as Element).closest('input, textarea, select, [contenteditable="true"]');
+    if ((event.key === 'k' || event.key === 'K') && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      if (ui.dialog.open) close();
+      else open();
+      return;
+    }
+    if (event.key === '/' && !typing && !ui.dialog.open) {
+      event.preventDefault();
+      open();
+      return;
+    }
+    if (!ui.dialog.open || event.target !== ui.input) return;
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (!results.length) return;
+      const delta = event.key === 'ArrowDown' ? 1 : -1;
+      setActive((active + delta + results.length) % results.length);
+    } else if (event.key === 'Enter' && results[active]) {
+      event.preventDefault();
+      const href = results[active].href;
+      close();
+      navigate(href);
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    if (target.closest('[data-search-open]')) {
+      open();
+      return;
+    }
+    const ui = els();
+    if (!ui?.dialog.open) return;
+    if (target === ui.dialog || target.closest('[data-palette-close]') || target.closest('.palette-results a')) close();
+  });
+
+  document.addEventListener('input', (event) => {
+    if ((event.target as Element).matches('[data-palette-input]')) update();
+  });
+
+  // 鼠标移到搜索按钮上就预取索引，打开时基本无需等待。
+  document.addEventListener('pointerover', (event) => {
+    if ((event.target as Element).closest('[data-search-open]')) loadIndex();
+  });
+</script>

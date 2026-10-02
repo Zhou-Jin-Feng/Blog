@@ -9,10 +9,11 @@ import { siteConfig } from '../data/site';
       <p class="footer-note">以 Markdown 记录可阅读、可复现的工程实践。</p>
     </div>
     <div class="footer-links">
-      <a href="/rss.xml">RSS</a>
-      <a href="/sitemap-index.xml">Sitemap</a>
+      <a href="/rss.xml" data-astro-reload>RSS</a>
+      <a href="/sitemap-index.xml" data-astro-reload>Sitemap</a>
+      <a href={siteConfig.githubUrl} target="_blank" rel="noreferrer">GitHub</a>
       <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
     </div>
   </div>
-  <div class="container footer-bottom"><p>© {new Date().getFullYear()} · 首版模板</p></div>
+  <div class="container footer-bottom"><p>© {new Date().getFullYear()} 首版模板</p></div>
 </footer>

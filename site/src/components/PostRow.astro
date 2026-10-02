@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, readingMinutes } from '../lib/format';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const { post, headingLevel: Heading = 'h2' } = Astro.props;
+---
+
+<li class="post-row" data-tags={post.data.tags.join('|')}>
+  <time class="post-date" datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time>
+  <div class="post-main">
+    <Heading class="post-title" transition:name={`post-${post.id}`}><a href={`/blog/${post.id}/`}>{post.data.title}</a></Heading>
+    <p class="post-summary">{post.data.description}</p>
+    <ul class="tag-list" aria-label="文章标签">{post.data.tags.map((tag) => <li class="tag">{tag}</li>)}</ul>
+  </div>
+  <span class="post-length">约 {readingMinutes(post.body)} 分钟</span>
+</li>

@@ -1,0 +1,409 @@
+---
+import { buildGraph, GRAPH_HEIGHT, GRAPH_WIDTH } from '../lib/graph';
+
+const { nodes, links, groups } = await buildGraph();
+
+const labelOf = (node: (typeof nodes)[number]) => {
+  if (node.kind === 'hub') return { x: 0, y: node.r + 17, anchor: 'middle' };
+  if (node.kind !== 'tag') return undefined;
+  return node.x >= 0 ? { x: node.r + 5, y: 4, anchor: 'start' } : { x: -(node.r + 5), y: 4, anchor: 'end' };
+};
+
+const payload = JSON.stringify({
+  nodes: nodes.map(({ kind, group, title, summary, href, x, y }) => ({ kind, group, title, summary, href, x, y })),
+  links: links.map(({ source, target }) => [source, target]),
+}).replace(/</g, '\\u003c');
+---
+
+<figure class="graph" data-graph aria-label="站点内容关系图">
+  <div class="graph-stage">
+    <svg
+      viewBox={`${-GRAPH_WIDTH / 2} ${-GRAPH_HEIGHT / 2} ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g class="graph-links">
+        {links.map((link) => {
+          const s = nodes[link.source];
+          const t = nodes[link.target];
+          return (
+            <line
+              class="link"
+              data-kind={link.kind}
+              x1={s.x}
+              y1={s.y}
+              x2={t.x}
+              y2={t.y}
+              pathLength="1"
+              style={`--d:${Math.max(s.depth, t.depth)}`}
+            />
+          );
+        })}
+      </g>
+      <g class="graph-nodes">
+        {nodes.map((node, index) => {
+          const label = labelOf(node);
+          return (
+            <g
+              class="node"
+              data-kind={node.kind}
+              data-group={node.group}
+              style={`--x:${node.x};--y:${node.y};--d:${node.depth};--k:${index % 7}`}
+            >
+              {node.kind === 'hub' && <circle class="halo" r={node.r + 6} />}
+              <circle class="dot" r={node.r} />
+              {label && (
+                <text x={label.x} y={label.y} text-anchor={label.anchor}>
+                  {node.label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+    <div class="graph-tip" aria-hidden="true">
+      <span class="tip-kind"></span>
+      <strong class="tip-title"></strong>
+      <span class="tip-summary"></span>
+      <span class="tip-hint"></span>
+    </div>
+  </div>
+  <figcaption>
+    <ul class="graph-legend" aria-label="按内容类型高亮">
+      {groups.map((group) => (
+        <li>
+          <button class="legend-chip" type="button" data-legend={group.kind} aria-pressed="false">
+            {group.label}<span class="legend-count">{group.count}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+    <p class="graph-hint">
+      <span class="hint-pointer">把鼠标停在节点上看标题，拖动节点看看内容之间怎么连着。</span>
+      <span class="hint-touch">点按节点看标题，再点一次打开。</span>
+    </p>
+  </figcaption>
+  <script is:inline type="application/json" data-graph-data set:html={payload} />
+</figure>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+
+  type Datum = { kind: string; group: string; title: string; summary: string; href?: string; x: number; y: number };
+  type Payload = { nodes: Datum[]; links: [number, number][] };
+
+  const KIND_LABEL: Record<string, string> = {
+    root: '起点', post: '文章', project: '项目', doc: '文档', video: '视频', download: '下载', tag: '标签',
+  };
+  const ENTRANCE_MS = 1400;
+
+  function initGraph(figure: HTMLElement) {
+    const svg = figure.querySelector('svg')!;
+    const tip = figure.querySelector<HTMLElement>('.graph-tip')!;
+    const stage = figure.querySelector<HTMLElement>('.graph-stage')!;
+    const data = JSON.parse(figure.querySelector('[data-graph-data]')!.textContent!) as Payload;
+    const nodeEls = [...svg.querySelectorAll<SVGGElement>('.node')];
+    const linkEls = [...svg.querySelectorAll<SVGLineElement>('.link')];
+    const legend = [...figure.querySelectorAll<HTMLButtonElement>('[data-legend]')];
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const { nodes, links } = data;
+    const home = nodes.map((node) => ({ x: node.x, y: node.y }));
+    const pos = nodes.map((node) => ({ x: node.x, y: node.y, vx: 0, vy: 0 }));
+    const rest = links.map(([s, t]) => Math.hypot(home[t].x - home[s].x, home[t].y - home[s].y));
+    const neighbors = nodes.map(() => new Set<number>());
+    links.forEach(([s, t]) => {
+      neighbors[s].add(t);
+      neighbors[t].add(s);
+    });
+    const phase = nodes.map((_, i) => [(i * 2.39996) % (Math.PI * 2), (i * 1.61803) % (Math.PI * 2)]);
+
+    let raf = 0;
+    let visible = true;
+    let simActive = false;
+    let dragging = -1;
+    let selected = -1;
+    let entranceDone = reduceMotion;
+    const startedAt = performance.now();
+    const drift = { x: new Float64Array(nodes.length), y: new Float64Array(nodes.length) };
+
+    const timer = window.setTimeout(() => {
+      entranceDone = true;
+      figure.classList.add('is-live');
+      kick();
+    }, reduceMotion ? 0 : ENTRANCE_MS);
+
+    function step() {
+      links.forEach(([s, t], l) => {
+        const a = pos[s];
+        const b = pos[t];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const d = Math.hypot(dx, dy) || 1e-3;
+        const f = ((d - rest[l]) / d) * 0.05;
+        a.vx += dx * f;
+        a.vy += dy * f;
+        b.vx -= dx * f;
+        b.vy -= dy * f;
+      });
+      let energy = 0;
+      pos.forEach((p, i) => {
+        if (i === dragging) return;
+        p.vx = (p.vx + (home[i].x - p.x) * 0.012) * 0.84;
+        p.vy = (p.vy + (home[i].y - p.y) * 0.012) * 0.84;
+        p.x += p.vx;
+        p.y += p.vy;
+        energy += p.vx * p.vx + p.vy * p.vy;
+      });
+      return energy;
+    }
+
+    function render(time: number) {
+      const ramp = reduceMotion ? 0 : Math.min(1, (time - startedAt - ENTRANCE_MS) / 1600);
+      for (let i = 0; i < nodes.length; i += 1) {
+        const amp = nodes[i].kind === 'root' ? 0 : 3 * ramp;
+        drift.x[i] = pos[i].x + Math.sin(time * 0.0007 + phase[i][0]) * amp;
+        drift.y[i] = pos[i].y + Math.cos(time * 0.0006 + phase[i][1]) * amp;
+        nodeEls[i].style.transform = `translate(${drift.x[i].toFixed(2)}px, ${drift.y[i].toFixed(2)}px)`;
+      }
+      links.forEach(([s, t], l) => {
+        const line = linkEls[l];
+        line.setAttribute('x1', drift.x[s].toFixed(2));
+        line.setAttribute('y1', drift.y[s].toFixed(2));
+        line.setAttribute('x2', drift.x[t].toFixed(2));
+        line.setAttribute('y2', drift.y[t].toFixed(2));
+      });
+    }
+
+    function frame(time: number) {
+      raf = 0;
+      if (!visible) return;
+      if (simActive && step() < 0.002 && dragging < 0) simActive = false;
+      if (entranceDone) render(time);
+      if (simActive || (!reduceMotion && entranceDone)) raf = requestAnimationFrame(frame);
+    }
+
+    function kick() {
+      if (!raf && visible) raf = requestAnimationFrame(frame);
+    }
+
+    function light(indexes: Set<number>) {
+      svg.classList.toggle('has-focus', indexes.size > 0);
+      nodeEls.forEach((el, i) => el.classList.toggle('is-lit', indexes.has(i)));
+      linkEls.forEach((el, l) => el.classList.toggle('is-lit', indexes.has(links[l][0]) && indexes.has(links[l][1])));
+    }
+
+    function focusNode(i: number) {
+      light(new Set([i, ...neighbors[i]]));
+      nodeEls.forEach((el, k) => el.classList.toggle('is-current', k === i));
+    }
+
+    function clearFocus() {
+      light(new Set());
+      nodeEls.forEach((el) => el.classList.remove('is-current'));
+      hideTip();
+    }
+
+    function showTip(i: number, pointerType: string) {
+      const node = nodes[i];
+      tip.querySelector('.tip-kind')!.textContent = node.kind === 'hub' ? '栏目' : KIND_LABEL[node.group] ?? '';
+      tip.querySelector('.tip-title')!.textContent = node.kind === 'tag' ? `#${node.title}` : node.title;
+      tip.querySelector('.tip-summary')!.textContent = node.summary;
+      tip.querySelector('.tip-hint')!.textContent = node.href ? (pointerType === 'touch' ? '再点一次打开' : '点击打开') : '';
+      tip.classList.add('is-visible');
+
+      const box = nodeEls[i].querySelector('.dot')!.getBoundingClientRect();
+      const frame = stage.getBoundingClientRect();
+      const width = tip.offsetWidth;
+      const height = tip.offsetHeight;
+      const x = Math.min(Math.max(box.left + box.width / 2 - frame.left, width / 2 + 8), frame.width - width / 2 - 8);
+      const above = box.top - frame.top > height + 24;
+      tip.classList.toggle('is-below', !above);
+      tip.style.left = `${x}px`;
+      tip.style.top = `${above ? box.top - frame.top : box.bottom - frame.top}px`;
+    }
+
+    function hideTip() {
+      tip.classList.remove('is-visible');
+    }
+
+    function resetLegend() {
+      legend.forEach((button) => button.setAttribute('aria-pressed', 'false'));
+    }
+
+    function select(i: number, pointerType: string) {
+      selected = i;
+      resetLegend();
+      focusNode(i);
+      showTip(i, pointerType);
+    }
+
+    function toSvgPoint(event: PointerEvent) {
+      const matrix = svg.getScreenCTM();
+      if (!matrix) return { x: 0, y: 0 };
+      const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+      return { x: point.x, y: point.y };
+    }
+
+    const cleanups: (() => void)[] = [];
+    const on =(target: EventTarget, type: string, handler: (event: any) => void) => {
+      target.addEventListener(type, handler);
+      cleanups.push(() => target.removeEventListener(type, handler));
+    };
+
+    nodeEls.forEach((el, i) => {
+      let start = { x: 0, y: 0 };
+      let offset = { x: 0, y: 0 };
+      let moved = false;
+
+      on(el, 'pointerenter', (event: PointerEvent) => {
+        if (event.pointerType !== 'mouse' || dragging >= 0) return;
+        focusNode(i);
+        showTip(i, event.pointerType);
+      });
+      on(el, 'pointerleave', (event: PointerEvent) => {
+        if (event.pointerType !== 'mouse' || dragging >= 0) return;
+        if (selected >= 0) select(selected, 'mouse');
+        else clearFocus();
+      });
+      on(el, 'pointerdown', (event: PointerEvent) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        el.setPointerCapture(event.pointerId);
+        dragging = i;
+        moved = false;
+        start = { x: event.clientX, y: event.clientY };
+        const point = toSvgPoint(event);
+        offset = { x: pos[i].x - point.x, y: pos[i].y - point.y };
+        entranceDone = true;
+        figure.classList.add('is-live');
+      });
+      on(el, 'pointermove', (event: PointerEvent) => {
+        if (dragging !== i) return;
+        if (!moved && Math.hypot(event.clientX - start.x, event.clientY - start.y) < 4) return;
+        if (!moved) {
+          moved = true;
+          el.classList.add('is-dragging');
+          hideTip();
+          focusNode(i);
+        }
+        const point = toSvgPoint(event);
+        pos[i].x = point.x + offset.x;
+        pos[i].y = point.y + offset.y;
+        pos[i].vx = 0;
+        pos[i].vy = 0;
+        simActive = true;
+        kick();
+      });
+      const release = (event: PointerEvent) => {
+        if (dragging !== i) return;
+        dragging = -1;
+        el.classList.remove('is-dragging');
+        if (moved) {
+          simActive = true;
+          kick();
+          if (selected >= 0) select(selected, event.pointerType);
+          else clearFocus();
+          return;
+        }
+        if (event.type === 'pointercancel') return;
+        const node = nodes[i];
+        const confirmed = event.pointerType !== 'touch' || selected === i;
+        if (node.href && confirmed) {
+          navigate(node.href);
+          return;
+        }
+        if (node.kind === 'tag' && selected === i) {
+          selected = -1;
+          clearFocus();
+          return;
+        }
+        select(i, event.pointerType);
+      };
+      on(el, 'pointerup', release);
+      on(el, 'pointercancel', release);
+    });
+
+    on(svg, 'pointerdown', (event: PointerEvent) => {
+      if ((event.target as Element).closest('.node')) return;
+      selected = -1;
+      resetLegend();
+      clearFocus();
+    });
+
+    legend.forEach((button) => {
+      on(button, 'click', () => {
+        const pressed = button.getAttribute('aria-pressed') === 'true';
+        resetLegend();
+        selected = -1;
+        hideTip();
+        nodeEls.forEach((el) => el.classList.remove('is-current'));
+        if (pressed) {
+          light(new Set());
+          return;
+        }
+        button.setAttribute('aria-pressed', 'true');
+        const group = button.dataset.legend;
+        const lit = new Set<number>();
+        nodes.forEach((node, i) => {
+          if (node.group !== group) return;
+          lit.add(i);
+          neighbors[i].forEach((n) => lit.add(n));
+        });
+        light(lit);
+      });
+    });
+
+    on(document, 'keydown', (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || (selected < 0 && !svg.classList.contains('has-focus'))) return;
+      selected = -1;
+      resetLegend();
+      clearFocus();
+    });
+
+    // 窄屏隐藏标签文字，并把画布裁到节点范围，让节点尽量大。
+    const fullViewBox = svg.getAttribute('viewBox')!;
+    const xs = home.map((p) => p.x);
+    const ys = home.map((p) => p.y);
+    const compactViewBox = [Math.min(...xs) - 24, Math.min(...ys) - 24, Math.max(...xs) - Math.min(...xs) + 48, Math.max(...ys) - Math.min(...ys) + 58].join(' ');
+    const resize = new ResizeObserver(() => {
+      const compact = stage.clientWidth < 520;
+      figure.classList.toggle('is-compact', compact);
+      svg.setAttribute('viewBox', compact ? compactViewBox : fullViewBox);
+      const scale = svg.clientWidth / svg.viewBox.baseVal.width || 1;
+      figure.style.setProperty('--lk', String(1 / Math.pow(scale, 0.75)));
+    });
+    resize.observe(svg);
+
+    const intersection = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && document.visibilityState === 'visible';
+      if (visible) kick();
+    });
+    intersection.observe(figure);
+    on(document, 'visibilitychange', () => {
+      visible = document.visibilityState === 'visible';
+      if (visible) kick();
+    });
+
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      resize.disconnect();
+      intersection.disconnect();
+      cleanups.forEach((fn) => fn());
+    };
+  }
+
+  let dispose: (() => void) | undefined;
+  document.addEventListener('astro:page-load', () => {
+    dispose?.();
+    dispose = undefined;
+    const figure = document.querySelector<HTMLElement>('[data-graph]');
+    if (figure) dispose = initGraph(figure);
+  });
+  document.addEventListener('astro:before-swap', () => {
+    dispose?.();
+    dispose = undefined;
+  });
+</script>

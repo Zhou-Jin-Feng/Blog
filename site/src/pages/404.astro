@@ -4,13 +4,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout title="页面未找到" description="请求的页面不存在。">
   <div class="container page-shell">
-    <section class="page-header">
-      <p class="eyebrow">404</p>
+    <section class="page-header not-found">
+      <p class="not-found-code" aria-hidden="true">404</p>
       <h1>页面未找到</h1>
-      <p class="lede">地址可能已变更，或页面尚未创建。</p>
+      <p class="lede">地址可能已变更，或页面尚未创建。可以搜索站内内容，或者回到首页重新找。</p>
       <div class="hero-actions">
-        <a class="button" href="/">返回首页</a>
-        <a class="button secondary" href="/blog/">浏览博客</a>
+        <button class="button" type="button" data-search-open>搜索站内内容</button>
+        <a class="button secondary" href="/">返回首页</a>
       </div>
     </section>
   </div>

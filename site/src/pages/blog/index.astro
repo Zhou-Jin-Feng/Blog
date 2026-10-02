@@ -2,24 +2,81 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import PostRow from '../../components/PostRow.astro';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+const tagCounts = new Map<string, number>();
+for (const post of posts) {
+  for (const tag of post.data.tags) tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+}
+const tags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh-CN'));
 ---
 
 <BaseLayout title="博客" description="按时间整理的学习笔记与工程实践文章。">
   <div class="container page-shell">
-    <header class="page-header"><p class="eyebrow">Blog</p><h1>博客</h1><p class="lede">用文章记录问题、方法、验证结果和复盘。</p></header>
+    <header class="page-header">
+      <h1>博客</h1>
+      <p class="lede">用文章记录问题、方法、验证结果和复盘。</p>
+    </header>
     <TemplateNotice />
-    <div class="card-grid">
-      {posts.map((post) => (
-        <article class="card">
-          <p class="card-meta"><time datetime={post.data.publishDate.toISOString()}>{post.data.publishDate.toLocaleDateString('zh-CN')}</time></p>
-          <h2><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
-          <p>{post.data.description}</p>
-          <ul class="tag-list" aria-label="文章标签">{post.data.tags.map((tag) => <li class="tag">{tag}</li>)}</ul>
-        </article>
+    <div class="filter-bar" role="group" aria-label="按标签筛选文章" data-filter>
+      <button class="chip" type="button" data-tag="" aria-pressed="true">全部<span class="chip-count">{posts.length}</span></button>
+      {tags.map(([tag, count]) => (
+        <button class="chip" type="button" data-tag={tag} aria-pressed="false">{tag}<span class="chip-count">{count}</span></button>
       ))}
     </div>
+    <p class="visually-hidden" aria-live="polite" data-filter-status></p>
+    <ol class="post-list" data-filter-list>
+      {posts.map((post) => <PostRow post={post} />)}
+    </ol>
   </div>
 </BaseLayout>
+
+<script>
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function apply(bar: HTMLElement, tag: string, animate: boolean) {
+    const rows = [...document.querySelectorAll<HTMLElement>('[data-filter-list] > .post-row')];
+    const status = document.querySelector('[data-filter-status]');
+    const update = () => {
+      let shown = 0;
+      rows.forEach((row) => {
+        const match = !tag || (row.dataset.tags ?? '').split('|').includes(tag);
+        row.hidden = !match;
+        if (match) shown += 1;
+      });
+      bar.querySelectorAll<HTMLButtonElement>('[data-tag]').forEach((chip) => chip.setAttribute('aria-pressed', String(chip.dataset.tag === tag)));
+      if (status) status.textContent = tag ? `“${tag}”标签下有 ${shown} 篇文章` : `共 ${shown} 篇文章`;
+    };
+
+    if (!animate || !document.startViewTransition || reduceMotion()) {
+      update();
+      return;
+    }
+    // 只在筛选时给每行临时命名，让留下的行平滑移位、离开的行淡出。
+    rows.forEach((row, i) => row.style.setProperty('view-transition-name', `post-row-${i}`));
+    document.startViewTransition(update).finished.finally(() => {
+      rows.forEach((row) => row.style.removeProperty('view-transition-name'));
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const bar = document.querySelector<HTMLElement>('[data-filter]');
+    if (!bar) return;
+    const known = new Set([...bar.querySelectorAll<HTMLElement>('[data-tag]')].map((chip) => chip.dataset.tag));
+    const initial = new URL(location.href).searchParams.get('tag') ?? '';
+    if (initial && known.has(initial)) apply(bar, initial, false);
+
+    bar.addEventListener('click', (event) => {
+      const chip = (event.target as Element).closest<HTMLButtonElement>('[data-tag]');
+      if (!chip || chip.getAttribute('aria-pressed') === 'true') return;
+      const tag = chip.dataset.tag ?? '';
+      apply(bar, tag, true);
+      const url = new URL(location.href);
+      if (tag) url.searchParams.set('tag', tag);
+      else url.searchParams.delete('tag');
+      history.replaceState(history.state, '', url);
+    });
+  });
+</script>

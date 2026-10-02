@@ -1,30 +1,124 @@
 ---
 import { navItems, siteConfig } from '../data/site';
+
+const isActive = (href: string) => (href === '/' ? Astro.url.pathname === '/' : Astro.url.pathname.startsWith(href));
 ---
 
-<header class="site-header">
+<header class="site-header" transition:name="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
-      <span class="brand-mark" aria-hidden="true">01</span>
+      <span class="brand-mark" aria-hidden="true">工</span>
       <span class="brand-copy">
         <span class="brand-name">{siteConfig.name}</span>
-        <span class="brand-subtitle">学习 · 工程 · 复盘</span>
+        <span class="brand-subtitle">学习、工程、复盘</span>
       </span>
     </a>
-    <nav aria-label="主导航">
-      <ul class="nav-list">
+    <nav class="site-nav" aria-label="主导航" data-nav>
+      <button class="nav-toggle icon-button" type="button" aria-expanded="false" aria-controls="nav-list" data-nav-toggle>
+        <span class="visually-hidden">打开导航菜单</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M4 12h16" /><path d="M4 17h16" /></svg>
+      </button>
+      <ul class="nav-list" id="nav-list">
         {navItems.map((item) => (
           <li>
-            <a
-              href={item.href}
-              class:list={{ 'is-active': item.href === '/' ? Astro.url.pathname === '/' : Astro.url.pathname.startsWith(item.href) }}
-              aria-current={item.href === '/' ? (Astro.url.pathname === '/' ? 'page' : undefined) : (Astro.url.pathname.startsWith(item.href) ? 'page' : undefined)}
-            >
-              {item.label}
+            <a href={item.href} class:list={{ 'is-active': isActive(item.href) }} aria-current={isActive(item.href) ? 'page' : undefined}>
+              {isActive(item.href) && <span class="nav-indicator" transition:name="nav-indicator" aria-hidden="true" />}
+              <span class="nav-label">{item.label}</span>
             </a>
           </li>
         ))}
       </ul>
     </nav>
+    <div class="header-tools">
+      <button class="search-trigger" type="button" data-search-open aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+        <span class="search-label">搜索</span>
+        <kbd data-shortcut>Ctrl K</kbd>
+      </button>
+      <button class="icon-button theme-toggle" type="button" data-theme-toggle>
+        <span class="visually-hidden" data-theme-label>切换深浅主题</span>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" /></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1Z" /></svg>
+      </button>
+    </div>
   </div>
 </header>
+
+<script>
+  const root = document.documentElement;
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function syncThemeLabel() {
+    const dark = root.dataset.theme === 'dark';
+    document.querySelectorAll('[data-theme-label]').forEach((label) => {
+      label.textContent = dark ? '切换到浅色主题' : '切换到深色主题';
+    });
+  }
+
+  function setTheme(theme: 'light' | 'dark') {
+    root.dataset.theme = theme;
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // 隐私模式下 localStorage 可能不可用，主题只在本次访问生效。
+    }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0f1d20' : '#e9efeb');
+    syncThemeLabel();
+  }
+
+  function toggleTheme(button: HTMLElement) {
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    if (!document.startViewTransition || reduceMotion()) {
+      setTheme(next);
+      return;
+    }
+    const rect = button.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    root.style.setProperty('--reveal-x', `${x}px`);
+    root.style.setProperty('--reveal-y', `${y}px`);
+    root.style.setProperty('--reveal-r', `${Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))}px`);
+    root.classList.add('theme-switching');
+    const transition = document.startViewTransition(() => setTheme(next));
+    transition.finished.finally(() => root.classList.remove('theme-switching'));
+  }
+
+  function setNavOpen(nav: HTMLElement, open: boolean) {
+    nav.toggleAttribute('data-open', open);
+    nav.querySelector('[data-nav-toggle]')?.setAttribute('aria-expanded', String(open));
+    const label = nav.querySelector('[data-nav-toggle] .visually-hidden');
+    if (label) label.textContent = open ? '关闭导航菜单' : '打开导航菜单';
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    const themeButton = target.closest<HTMLElement>('[data-theme-toggle]');
+    if (themeButton) {
+      toggleTheme(themeButton);
+      return;
+    }
+    const nav = document.querySelector<HTMLElement>('[data-nav]');
+    if (!nav) return;
+    if (target.closest('[data-nav-toggle]')) {
+      setNavOpen(nav, !nav.hasAttribute('data-open'));
+    } else if (nav.hasAttribute('data-open') && !target.closest('.nav-list')) {
+      setNavOpen(nav, false);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const nav = document.querySelector<HTMLElement>('[data-nav][data-open]');
+    if (!nav) return;
+    setNavOpen(nav, false);
+    nav.querySelector<HTMLElement>('[data-nav-toggle]')?.focus();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    syncThemeLabel();
+    const mac = /Mac|iPhone|iPad/.test(navigator.userAgent);
+    document.querySelectorAll('[data-shortcut]').forEach((kbd) => {
+      kbd.textContent = mac ? '⌘ K' : 'Ctrl K';
+    });
+  });
+</script>

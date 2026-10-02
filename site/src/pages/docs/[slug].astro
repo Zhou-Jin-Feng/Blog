@@ -2,6 +2,8 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import Toc from '../../components/Toc.astro';
+import { formatDate } from '../../lib/format';
 
 type Props = { doc: CollectionEntry<'docs'> };
 
@@ -11,16 +13,31 @@ export async function getStaticPaths() {
 }
 
 const { doc } = Astro.props as Props;
-const { Content } = await render(doc);
+const { Content, headings } = await render(doc);
 ---
 
 <BaseLayout title={doc.data.title} description={doc.data.summary}>
+  <div class="read-progress" aria-hidden="true"></div>
   <div class="container page-shell">
-    <article class="prose">
-      <header class="detail-header"><p class="eyebrow">Docs</p><h1>{doc.data.title}</h1><p class="card-meta">{doc.data.version} · <time datetime={doc.data.updatedDate.toISOString()}>{doc.data.updatedDate.toLocaleDateString('zh-CN')}</time></p></header>
-      {doc.data.template && <TemplateNotice />}
-      <Content />
-      <p><a href="/docs/">返回文档列表</a></p>
+    <article class="article">
+      <header class="detail-header">
+        <p class="crumb"><a href="/docs/">文档</a></p>
+        <h1 transition:name={`doc-${doc.id}`}>{doc.data.title}</h1>
+        <p class="lede">{doc.data.summary}</p>
+        <p class="detail-meta">
+          <span class="version">{doc.data.version}</span>
+          <span>更新于 <time datetime={doc.data.updatedDate.toISOString()}>{formatDate(doc.data.updatedDate)}</time></span>
+          <span>来源：{doc.data.source}</span>
+        </p>
+      </header>
+      <div class="article-layout">
+        <div class="prose">
+          {doc.data.template && <TemplateNotice />}
+          <Content />
+          <p><a href="/docs/">返回文档列表</a></p>
+        </div>
+        <Toc headings={headings} />
+      </div>
     </article>
   </div>
 </BaseLayout>

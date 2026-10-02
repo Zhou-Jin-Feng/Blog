@@ -3,25 +3,31 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
 
-const videos = await getCollection('videos');
+const [videos, projects] = await Promise.all([getCollection('videos'), getCollection('projects')]);
+const projectTitle = new Map(projects.map((project) => [project.id, project.data.title]));
 ---
 
 <BaseLayout title="视频" description="项目演示视频和文字摘要。">
   <div class="container page-shell">
-    <header class="page-header"><p class="eyebrow">Video</p><h1>视频</h1><p class="lede">每个视频都提供关联项目、摘要和直接访问链接。</p></header>
+    <header class="page-header"><h1>视频</h1><p class="lede">每个视频都提供关联项目、摘要和直接访问链接。</p></header>
     <TemplateNotice />
-    <div class="card-grid">
+    <div class="card-grid two-up">
       {videos.map((video) => (
-        <article class="card">
-          <div class="media-placeholder" role="img" aria-label="演示视频预览占位">
-            <span>VIDEO / PREVIEW</span>
-            <strong>开发阶段占位</strong>
+        <article class="card media-card">
+          <div class="media-placeholder" role="img" aria-label="演示视频封面占位">
+            <span>演示视频</span>
+            <strong>封面待补充</strong>
           </div>
-          <p class="card-meta">{video.data.platform} · 关联项目：{video.data.projectSlug}</p>
+          <p class="card-meta">
+            <span class="pill">{video.data.platform}</span>
+            {projectTitle.has(video.data.projectSlug)
+              ? <a href={`/projects/${video.data.projectSlug}/`}>关联项目：{projectTitle.get(video.data.projectSlug)}</a>
+              : <span>关联项目：{video.data.projectSlug}</span>}
+          </p>
           <h2>{video.data.title}</h2>
           <p>{video.data.summary}</p>
           {video.data.template && <TemplateNotice compact />}
-          <p><a class="button secondary" href={video.data.videoUrl} target="_blank" rel="noreferrer">直接访问视频</a></p>
+          <p class="card-actions"><a class="button secondary" href={video.data.videoUrl} target="_blank" rel="noreferrer">打开视频链接</a></p>
         </article>
       ))}
     </div>
