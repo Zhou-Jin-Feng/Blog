@@ -53,10 +53,46 @@ test.describe('Interactive enhancements', () => {
     await expect(palette).toBeHidden();
   });
 
-  test('search index never exposes drafts', async ({ request }) => {
-    const response = await request.get('/search.json');
-    expect(response.status()).toBe(200);
-    expect(await response.text()).not.toContain('template-draft');
+  test('search palette links cards on listing pages to their anchors', async ({ page }) => {
+    await page.goto('/');
+    await page.keyboard.press('Control+k');
+    await page.locator('[data-palette-input]').fill('演示');
+    const option = page.locator('[data-palette] [role="option"] a[href="/video/#video-template-demo"]');
+    await expect(option).toContainText('模板视频：项目演示占位');
+    await expect(option.locator('.option-type')).toHaveText('视频');
+  });
+
+  test('search index covers published posts but never drafts', async ({ page }) => {
+    await page.goto('/');
+    const urlsFor = (term: string) =>
+      page.evaluate(async (query) => {
+        // 用变量传路径，避免类型检查去解析构建产物里的模块。
+        const url = '/pagefind/pagefind.js';
+        const pagefind = await import(url);
+        const search = await pagefind.search(query);
+        const data: { url: string }[] = await Promise.all(search.results.map((result: { data: () => Promise<{ url: string }> }) => result.data()));
+        return data.map((item) => item.url);
+      }, term);
+
+    expect(await urlsFor('发布前')).toContain('/blog/template-release/');
+    expect((await urlsFor('模板草稿')).some((url) => url.includes('template-draft'))).toBe(false);
+  });
+
+  test('code blocks get a copy button, a title and follow the site theme', async ({ browser }) => {
+    const context = await browser.newContext({ reducedMotion: 'reduce', colorScheme: 'light' });
+    const page = await context.newPage();
+    await page.goto('/blog/template-architecture/');
+    const blocks = page.locator('.prose .expressive-code');
+    await expect(blocks).toHaveCount(2);
+    await expect(blocks.first().locator('figcaption')).toContainText('src/lib/content.ts');
+    await expect(blocks.first().locator('.copy button')).toHaveCount(1);
+
+    const background = () => blocks.first().locator('pre').evaluate((pre) => getComputedStyle(pre).backgroundColor);
+    const light = await background();
+    await page.locator('[data-theme-toggle]').click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect.poll(background).not.toBe(light);
+    await context.close();
   });
 
   test('blog tag filter narrows the list and syncs the URL', async ({ page }) => {

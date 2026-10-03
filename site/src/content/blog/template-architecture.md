@@ -17,6 +17,22 @@ template: true
 
 这里填写可复现的技术方案、关键决策和验证过程。
 
+代码块示例，带文件名标题：
+
+```ts title="src/lib/content.ts"
+export async function getPublishedPosts() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+}
+```
+
+终端命令示例：
+
+```bash
+cd site
+npm run build
+```
+
 ## 结果与复盘
 
 这里填写可验证结果、限制条件和下一步改进。

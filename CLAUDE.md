@@ -17,11 +17,14 @@ cd site
 npm ci
 npm run dev        # astro dev
 npm run check      # astro check，类型与内容校验
-npm run build      # 生产构建
+npm run build      # 生产构建，结束后用 Pagefind 生成搜索索引
 npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 ```
 
 需要 Node.js >= 22.12.0。CI（`.github/workflows/ci.yml`）在 push 到 `main` 和 PR 上跑 `check` → `build` → `test:e2e`，改完代码本地至少过一遍这三步再说完成。
+
+- 搜索索引只在 `build` 时生成，`astro dev` 下搜索面板搜不到正文；调搜索要先 build，再 `npm run preview`。
+- 改了 Markdown 渲染相关的配置（如 `astro.config.mjs` 里的 Expressive Code）后，先删 `site/node_modules/.astro` 再 build，否则会沿用缓存里的旧渲染结果。
 
 ## 内容模型
 
@@ -44,7 +47,7 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 ## 硬性约束
 
 - **未获得用户当次明确授权，不执行 `git commit` 或 `git push`。** 每次都要单独确认，上一次的授权不延续到下一次。
-- 推送到 `main` 会直接触发 Cloudflare Pages 生产部署，没有中间环节。
+- 推送到 `main` 会直接触发 Cloudflare Pages 生产部署，没有中间环节。所以改动一律建分支、提 PR，CI 通过且用户确认后由用户合并，不直接推 `main`。私有仓库在免费方案下无法开启分支保护，这条靠流程遵守。
 - 不对公开历史强制推送。需要回退用 `git revert`，或在 Pages 里对已验证的提交重新部署。
 - 发布前先更新 `docs/content-inventory.md`，并完成隐私、授权、链接检查。流程见 `docs/release-checklist.md`。
 

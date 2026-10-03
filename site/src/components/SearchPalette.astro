@@ -1,4 +1,19 @@
 ---
+import { navItems } from '../data/site';
+import { collectContent } from '../lib/content';
+import { formatDate } from '../lib/format';
+import { kindMeta } from '../lib/kinds';
+
+// 输入框为空时列出最近内容；栏目页面按标题在本地匹配。正文检索交给 Pagefind。
+const recent = (await collectContent()).slice(0, 8).map((item) => ({
+  type: kindMeta[item.kind].label,
+  title: item.title,
+  summary: item.summary,
+  href: item.href,
+  date: item.date && formatDate(item.date),
+}));
+const pages = navItems.map((item) => ({ type: '页面', title: item.label, summary: item.summary, href: item.href }));
+const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
 ---
 
 <dialog class="palette" aria-label="站内搜索" data-palette>
@@ -30,25 +45,47 @@
     </p>
   </div>
   <p class="visually-hidden" aria-live="polite" data-palette-status></p>
+  <script is:inline type="application/json" data-palette-data set:html={payload} />
 </dialog>
 
 <script>
   import { navigate } from 'astro:transitions/client';
 
-  type Entry = { type: string; title: string; summary: string; href: string; tags: string[]; date?: string };
+  type Entry = { type: string; title: string; summary: string; href: string; date?: string; excerpt?: string };
+  type PagefindData = {
+    url: string;
+    excerpt: string;
+    meta: Record<string, string | undefined>;
+    sub_results: { url: string; title: string; excerpt: string }[];
+  };
+  type Pagefind = {
+    options: (options: Record<string, unknown>) => Promise<void>;
+    debouncedSearch: (term: string, options?: object, timeout?: number) => Promise<{ results: { data: () => Promise<PagefindData> }[] } | null>;
+  };
 
-  let index: Promise<Entry[]> | undefined;
+  // 索引由构建脚本里的 pagefind 生成，astro dev 下不存在。用变量拼路径，避免 Vite 去解析它。
+  const PAGEFIND_URL = '/pagefind/pagefind.js';
+  const MAX_RESULTS = 12;
+
+  type PaletteData = { recent: Entry[]; pages: Entry[] };
+
+  let pagefind: Promise<Pagefind | undefined> | undefined;
+  const paletteData = new WeakMap<HTMLDialogElement, PaletteData>();
   let results: Entry[] = [];
   let active = 0;
+  let latest = 0;
 
-  const loadIndex = () => {
-    index ??= fetch('/search.json')
-      .then((response) => (response.ok ? response.json() : []))
+  const loadPagefind = () => {
+    pagefind ??= import(/* @vite-ignore */ PAGEFIND_URL)
+      .then(async (module: Pagefind) => {
+        await module.options({ excerptLength: 24 });
+        return module;
+      })
       .catch(() => {
-        index = undefined;
-        return [];
+        pagefind = undefined;
+        return undefined;
       });
-    return index;
+    return pagefind;
   };
 
   const els = () => {
@@ -63,20 +100,14 @@
     };
   };
 
-  function score(entry: Entry, terms: string[]) {
-    let total = 0;
-    const title = entry.title.toLowerCase();
-    const summary = entry.summary.toLowerCase();
-    const tags = entry.tags.map((tag) => tag.toLowerCase());
-    for (const term of terms) {
-      if (title.startsWith(term)) total += 14;
-      else if (title.includes(term)) total += 10;
-      else if (tags.some((tag) => tag.includes(term))) total += 7;
-      else if (summary.includes(term)) total += 4;
-      else if (entry.type.includes(term)) total += 2;
-      else return -1;
+  /** 每次换页对话框都是新的，按元素缓存解析结果。 */
+  function readData(dialog: HTMLDialogElement) {
+    let data = paletteData.get(dialog);
+    if (!data) {
+      data = JSON.parse(dialog.querySelector('[data-palette-data]')!.textContent!) as PaletteData;
+      paletteData.set(dialog, data);
     }
-    return total;
+    return data;
   }
 
   function highlight(text: string, terms: string[]) {
@@ -110,21 +141,75 @@
     return fragment;
   }
 
+  /** Pagefind 的摘要是带 <mark> 的 HTML。只保留文字和 <mark>，其余标签一律当纯文本。 */
+  function excerpt(html: string) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const fragment = document.createDocumentFragment();
+    template.content.childNodes.forEach((node) => {
+      if (node.nodeName === 'MARK') {
+        const mark = document.createElement('mark');
+        mark.textContent = node.textContent;
+        fragment.append(mark);
+      } else {
+        fragment.append(node.textContent ?? '');
+      }
+    });
+    return fragment;
+  }
+
+  function toEntries(data: PagefindData): Entry[] {
+    const type = data.meta.type ?? '';
+    // 视频、下载没有详情页：每张卡片算一个结果，直接跳到卡片的锚点。
+    if (data.meta.listing) {
+      return data.sub_results
+        .filter((sub) => sub.url.includes('#'))
+        .map((sub) => ({ type, title: sub.title, summary: '', excerpt: sub.excerpt, href: sub.url }));
+    }
+    return [{ type, title: data.meta.title ?? '', summary: '', excerpt: data.excerpt, href: data.url, date: data.meta.date }];
+  }
+
+  /** 返回 undefined 表示这次查询已被更新的输入取代。 */
+  async function searchContent(query: string) {
+    const engine = await loadPagefind();
+    if (!engine) return [];
+    const response = await engine.debouncedSearch(query, {}, 120);
+    if (!response) return undefined;
+    const data = await Promise.all(response.results.slice(0, MAX_RESULTS).map((result) => result.data()));
+    return data.flatMap(toEntries).slice(0, MAX_RESULTS);
+  }
+
+  /** 栏目页面：标题命中的排在正文结果前面，只有摘要命中的排在后面。 */
+  function matchPages(pages: Entry[], terms: string[]) {
+    const hits = pages.filter((page) => terms.every((term) => `${page.title}${page.summary}${page.type}`.toLowerCase().includes(term)));
+    const byTitle = (page: Entry) => terms.some((term) => page.title.toLowerCase().includes(term));
+    return { lead: hits.filter(byTitle), rest: hits.filter((page) => !byTitle(page)) };
+  }
+
   async function update() {
     const ui = els();
     if (!ui) return;
-    const entries = await loadIndex();
-    const terms = ui.input.value.trim().toLowerCase().replace(/^#/, '').split(/\s+/).filter(Boolean);
-    results = terms.length
-      ? entries
-          .map((entry) => ({ entry, score: score(entry, terms) }))
-          .filter((item) => item.score >= 0)
-          .sort((a, b) => b.score - a.score)
-          .map((item) => item.entry)
-          .slice(0, 12)
-      : entries.filter((entry) => entry.type !== '页面').slice(0, 8);
-    active = 0;
+    const query = ui.input.value.trim().replace(/^#/, '');
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const run = ++latest;
+    const data = readData(ui.dialog);
 
+    let next = data.recent;
+    if (terms.length) {
+      const content = await searchContent(query);
+      if (content === undefined || run !== latest) return;
+      const { lead, rest } = matchPages(data.pages, terms);
+      next = [...lead, ...content, ...rest];
+      if (import.meta.env.DEV && !(await loadPagefind())) {
+        ui.empty.textContent = '开发模式下没有搜索索引：先运行 npm run build，再用 npm run preview 查看。';
+      }
+    }
+    render(ui, next, terms);
+  }
+
+  function render(ui: NonNullable<ReturnType<typeof els>>, entries: Entry[], terms: string[]) {
+    results = entries;
+    active = 0;
     ui.list.replaceChildren(
       ...results.map((entry, i) => {
         const item = document.createElement('li');
@@ -144,7 +229,7 @@
         title.append(highlight(entry.title, terms));
         const summary = document.createElement('span');
         summary.className = 'option-summary';
-        summary.append(highlight(entry.summary, terms));
+        summary.append(entry.excerpt ? excerpt(entry.excerpt) : highlight(entry.summary, terms));
         body.append(title, summary);
         link.append(type, body);
         if (entry.date) {
@@ -231,8 +316,8 @@
     if ((event.target as Element).matches('[data-palette-input]')) update();
   });
 
-  // 鼠标移到搜索按钮上就预取索引，打开时基本无需等待。
+  // 鼠标移到搜索按钮上就预先加载 Pagefind，打开时基本无需等待。
   document.addEventListener('pointerover', (event) => {
-    if ((event.target as Element).closest('[data-search-open]')) loadIndex();
+    if ((event.target as Element).closest('[data-search-open]')) loadPagefind();
   });
 </script>

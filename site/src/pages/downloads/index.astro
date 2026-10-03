@@ -8,14 +8,14 @@ const downloads = (await getCollection('downloads')).sort((a, b) => b.data.updat
 ---
 
 <BaseLayout title="下载" description="公开下载资料、文件类型、大小和版本信息。">
-  <div class="container page-shell">
-    <header class="page-header"><h1>下载</h1><p class="lede">每个文件都应在公开前完成来源、授权和脱敏检查。</p></header>
+  <div class="container page-shell" data-pagefind-body data-pagefind-meta="type:下载">
+    <header class="page-header" data-pagefind-meta="listing:true"><h1>下载</h1><p class="lede">每个文件都应在公开前完成来源、授权和脱敏检查。</p></header>
     <TemplateNotice />
     <div class="card-grid two-up">
       {downloads.map((item) => (
         <article class="card file-card">
-          <p class="file-type" aria-hidden="true">{item.data.fileType}</p>
-          <h2>{item.data.title}</h2>
+          <p class="file-type" aria-hidden="true" data-pagefind-ignore>{item.data.fileType}</p>
+          <h2 id={`download-${item.id}`}>{item.data.title}</h2>
           <p>{item.data.summary}</p>
           <dl class="facts">
             <div><dt>格式</dt><dd>{item.data.fileType}</dd></div>
@@ -24,7 +24,7 @@ const downloads = (await getCollection('downloads')).sort((a, b) => b.data.updat
             <div><dt>更新</dt><dd><time datetime={item.data.updatedDate.toISOString()}>{formatDate(item.data.updatedDate)}</time></dd></div>
           </dl>
           {item.data.template && <TemplateNotice compact />}
-          <p class="card-actions"><a class="button" href={item.data.downloadUrl} download>下载文件</a></p>
+          <p class="card-actions" data-pagefind-ignore><a class="button" href={item.data.downloadUrl} download>下载文件</a></p>
         </article>
       ))}
     </div>

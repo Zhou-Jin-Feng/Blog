@@ -22,6 +22,8 @@ const { Content, headings } = await render(post);
   transitionName={`post-${post.id}`}
   headings={headings}
   template={post.data.template}
+  kind="post"
+  date={post.data.publishDate}
 >
   <Fragment slot="meta">
     <p class="detail-meta">
@@ -33,7 +35,7 @@ const { Content, headings } = await render(post);
   </Fragment>
   <Content />
   {(newer || older) && (
-    <nav class="pager" aria-label="相邻文章" slot="after">
+    <nav class="pager" aria-label="相邻文章" slot="after" data-pagefind-ignore>
       {older ? <a class="pager-link" href={`/blog/${older.id}/`}><span class="pager-label">较早一篇</span><span class="pager-title">{older.data.title}</span></a> : <span />}
       {newer && <a class="pager-link is-next" href={`/blog/${newer.id}/`}><span class="pager-label">较新一篇</span><span class="pager-title">{newer.data.title}</span></a>}
     </nav>

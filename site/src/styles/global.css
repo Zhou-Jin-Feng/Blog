@@ -300,7 +300,7 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
 .prose :is(ul, ol):not([class]) { padding-left: 1.4rem; }
 .prose :is(ul, ol):not([class]) li + li { margin-top: 0.35rem; }
 .prose li::marker { color: var(--accent); }
-.prose pre { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: light-dark(#14252a, #0a1517) !important; color: #e3ede9; padding: 1.1rem 1.25rem; font-size: 0.9rem; line-height: 1.7; }
+/* 代码块由 Expressive Code 渲染，配置见 astro.config.mjs；这里只管行内代码。 */
 .prose code { font-family: var(--font-mono); }
 .prose :not(pre) > code { border-radius: 6px; background: var(--surface-2); padding: 0.12em 0.4em; font-size: 0.88em; }
 .prose blockquote { margin: 1.5rem 0; border-left: 3px solid var(--gamboge); border-radius: 0 12px 12px 0; background: var(--surface); padding: 0.85rem 1.2rem; color: var(--muted); }

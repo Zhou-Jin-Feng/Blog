@@ -3,6 +3,8 @@ import type { MarkdownHeading } from 'astro';
 import BaseLayout from './BaseLayout.astro';
 import TemplateNotice from '../components/TemplateNotice.astro';
 import Toc from '../components/Toc.astro';
+import { formatDate } from '../lib/format';
+import { kindMeta, type ContentKind } from '../lib/kinds';
 
 interface Props {
   title: string;
@@ -13,17 +15,21 @@ interface Props {
   transitionName: string;
   headings: MarkdownHeading[];
   template: boolean;
+  /** 写进搜索索引，搜索面板据此显示类型和日期。 */
+  kind: ContentKind;
+  date?: Date;
 }
 
-const { title, description, crumb, transitionName, headings, template } = Astro.props;
+const { title, description, crumb, transitionName, headings, template, kind, date } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="read-progress" aria-hidden="true"></div>
   <div class="container page-shell">
-    <article class="article">
-      <header class="detail-header">
-        <p class="crumb"><a href={crumb.href}>{crumb.label}</a></p>
+    {/* Pagefind 一个属性只认一组 key:value，类型和日期分开挂。 */}
+    <article class="article" data-pagefind-body data-pagefind-meta={`type:${kindMeta[kind].label}`}>
+      <header class="detail-header" data-pagefind-meta={date && `date:${formatDate(date)}`}>
+        <p class="crumb" data-pagefind-ignore><a href={crumb.href}>{crumb.label}</a></p>
         <h1 transition:name={transitionName}>{title}</h1>
         <p class="lede">{description}</p>
         <slot name="meta" />
