@@ -1,0 +1,16 @@
+# 网页版简历的各个段落，按 order 从小到大显示。替换真实内容时把 template 改为 false。
+- id: summary
+  order: 1
+  title: "个人概述"
+  content: "这里替换为一段简洁的个人定位、技术方向和工程实践重点。"
+  template: true
+- id: skills
+  order: 2
+  title: "核心能力"
+  content: "这里替换为经过真实项目验证的语言、框架、工具和协作能力。"
+  template: true
+- id: projects
+  order: 3
+  title: "代表项目"
+  content: "这里替换为项目目标、本人贡献、结果和公开链接。"
+  template: true

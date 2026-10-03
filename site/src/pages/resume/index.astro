@@ -1,7 +1,9 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
-import { resumeSections } from '../../data/site';
+
+const resumeSections = (await getCollection('resume')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout title="简历" description="网页版简历摘要和脱敏 PDF 下载入口。">
@@ -9,7 +11,7 @@ import { resumeSections } from '../../data/site';
     <header class="page-header"><h1>简历</h1><p class="lede">网页版摘要与可下载 PDF 保持互补，真实内容替换后再用于公开展示。</p></header>
     <TemplateNotice />
     <section class="resume-sheet" aria-label="简历摘要">
-      {resumeSections.map((section) => (
+      {resumeSections.map(({ data: section }) => (
         <article class="resume-block">
           <h2>{section.title}</h2>
           <p>{section.content}</p>

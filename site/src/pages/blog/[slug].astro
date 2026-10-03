@@ -1,15 +1,13 @@
 ---
-import { getCollection, render, type CollectionEntry } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TemplateNotice from '../../components/TemplateNotice.astro';
-import Toc from '../../components/Toc.astro';
+import { render, type CollectionEntry } from 'astro:content';
+import DetailLayout from '../../layouts/DetailLayout.astro';
+import { getPublishedPosts } from '../../lib/content';
 import { formatDate, readingMinutes } from '../../lib/format';
 
 type Props = { post: CollectionEntry<'blog'>; newer?: CollectionEntry<'blog'>; older?: CollectionEntry<'blog'> };
 
 export async function getStaticPaths() {
-  const posts = (await getCollection('blog', ({ data }) => !data.draft))
-    .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+  const posts = await getPublishedPosts();
   return posts.map((post, i) => ({ params: { slug: post.id }, props: { post, newer: posts[i - 1], older: posts[i + 1] } }));
 }
 
@@ -17,34 +15,27 @@ const { post, newer, older } = Astro.props as Props;
 const { Content, headings } = await render(post);
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description}>
-  <div class="read-progress" aria-hidden="true"></div>
-  <div class="container page-shell">
-    <article class="article">
-      <header class="detail-header">
-        <p class="crumb"><a href="/blog/">博客</a></p>
-        <h1 transition:name={`post-${post.id}`}>{post.data.title}</h1>
-        <p class="lede">{post.data.description}</p>
-        <p class="detail-meta">
-          <time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time>
-          {post.data.updatedDate && <span>更新于 <time datetime={post.data.updatedDate.toISOString()}>{formatDate(post.data.updatedDate)}</time></span>}
-          <span>约 {readingMinutes(post.body)} 分钟读完</span>
-        </p>
-        <ul class="tag-list" aria-label="文章标签">{post.data.tags.map((tag) => <li><a class="tag" href={`/blog/?tag=${encodeURIComponent(tag)}`}>{tag}</a></li>)}</ul>
-      </header>
-      <div class="article-layout">
-        <div class="prose">
-          {post.data.template && <TemplateNotice />}
-          <Content />
-        </div>
-        <Toc headings={headings} />
-      </div>
-      {(newer || older) && (
-        <nav class="pager" aria-label="相邻文章">
-          {older ? <a class="pager-link" href={`/blog/${older.id}/`}><span class="pager-label">较早一篇</span><span class="pager-title">{older.data.title}</span></a> : <span />}
-          {newer && <a class="pager-link is-next" href={`/blog/${newer.id}/`}><span class="pager-label">较新一篇</span><span class="pager-title">{newer.data.title}</span></a>}
-        </nav>
-      )}
-    </article>
-  </div>
-</BaseLayout>
+<DetailLayout
+  title={post.data.title}
+  description={post.data.description}
+  crumb={{ href: '/blog/', label: '博客' }}
+  transitionName={`post-${post.id}`}
+  headings={headings}
+  template={post.data.template}
+>
+  <Fragment slot="meta">
+    <p class="detail-meta">
+      <time datetime={post.data.publishDate.toISOString()}>{formatDate(post.data.publishDate)}</time>
+      {post.data.updatedDate && <span>更新于 <time datetime={post.data.updatedDate.toISOString()}>{formatDate(post.data.updatedDate)}</time></span>}
+      <span>约 {readingMinutes(post.body)} 分钟读完</span>
+    </p>
+    <ul class="tag-list" aria-label="文章标签">{post.data.tags.map((tag) => <li><a class="tag" href={`/blog/?tag=${encodeURIComponent(tag)}`}>{tag}</a></li>)}</ul>
+  </Fragment>
+  <Content />
+  {(newer || older) && (
+    <nav class="pager" aria-label="相邻文章" slot="after">
+      {older ? <a class="pager-link" href={`/blog/${older.id}/`}><span class="pager-label">较早一篇</span><span class="pager-title">{older.data.title}</span></a> : <span />}
+      {newer && <a class="pager-link is-next" href={`/blog/${newer.id}/`}><span class="pager-label">较新一篇</span><span class="pager-title">{newer.data.title}</span></a>}
+    </nav>
+  )}
+</DetailLayout>

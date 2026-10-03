@@ -25,7 +25,7 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 
 ## 内容模型
 
-五个 collection 定义在 `site/src/content.config.ts`，全部用 zod 严格校验，加内容时字段不全会直接构建失败：
+七个 collection 定义在 `site/src/content.config.ts`，全部用 zod 严格校验，加内容时字段不全会直接构建失败。前五个是 `src/content/<名称>/` 下的 Markdown，后两个是单个 YAML 文件：
 
 | collection | 必填字段要点 |
 | --- | --- |
@@ -34,8 +34,12 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 | `docs` | `title` `summary` `version` `updatedDate` `source` |
 | `videos` | `title` `summary` `projectSlug` `platform`（Bilibili/YouTube/其他）`videoUrl` |
 | `downloads` | `title` `summary` `version` `updatedDate` `fileType` `fileSize` `downloadUrl` |
+| `timeline`（`src/content/timeline.yaml`） | `id` `order` `period` `type` `title` `description` `result` |
+| `resume`（`src/content/resume.yaml`） | `id` `order` `title` `content` |
 
 每个 collection 都有 `template` 字段，默认 `true`，用来标记模板占位内容。换成真实内容时要显式设 `false`。
+
+读内容时优先用 `site/src/lib/content.ts`：`getPublishedPosts()` 取非草稿文章并按日期倒序，`collectContent()` 把五类 Markdown 内容整理成统一结构。内容类型的显示名称在 `site/src/lib/kinds.ts`。
 
 ## 硬性约束
 

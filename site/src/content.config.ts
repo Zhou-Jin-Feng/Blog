@@ -1,5 +1,5 @@
 import { defineCollection } from 'astro:content';
-import { glob } from 'astro/loaders';
+import { file, glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
 const markdown = (name: string) =>
@@ -74,4 +74,27 @@ const downloads = defineCollection({
   }),
 });
 
-export const collections = { blog, projects, docs, videos, downloads };
+const timeline = defineCollection({
+  loader: file('./src/content/timeline.yaml'),
+  schema: z.object({
+    order: z.number().int(),
+    period: z.string().min(1),
+    type: z.string().min(1),
+    title: z.string().min(1),
+    description: z.string().min(1),
+    result: z.string().min(1),
+    template: z.boolean().default(true),
+  }),
+});
+
+const resume = defineCollection({
+  loader: file('./src/content/resume.yaml'),
+  schema: z.object({
+    order: z.number().int(),
+    title: z.string().min(1),
+    content: z.string().min(1),
+    template: z.boolean().default(true),
+  }),
+});
+
+export const collections = { blog, projects, docs, videos, downloads, timeline, resume };

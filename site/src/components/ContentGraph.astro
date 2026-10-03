@@ -89,12 +89,15 @@ const payload = JSON.stringify({
 
 <script>
   import { navigate } from 'astro:transitions/client';
+  import { contentKinds, kindMeta } from '../lib/kinds';
 
   type Datum = { kind: string; group: string; title: string; summary: string; href?: string; x: number; y: number };
   type Payload = { nodes: Datum[]; links: [number, number][] };
 
   const KIND_LABEL: Record<string, string> = {
-    root: '起点', post: '文章', project: '项目', doc: '文档', video: '视频', download: '下载', tag: '标签',
+    root: '起点',
+    tag: '标签',
+    ...Object.fromEntries(contentKinds.map((kind) => [kind, kindMeta[kind].label])),
   };
   const ENTRANCE_MS = 1400;
 

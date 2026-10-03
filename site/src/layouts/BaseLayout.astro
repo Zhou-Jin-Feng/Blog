@@ -3,7 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import SearchPalette from '../components/SearchPalette.astro';
-import { siteConfig } from '../data/site';
+import { siteConfig, themeColors } from '../data/site';
 import '../styles/global.css';
 
 interface Props {
@@ -23,7 +23,7 @@ const canonicalUrl = Astro.site
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#e9efeb" />
+    <meta name="theme-color" content={themeColors.light} />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
@@ -34,7 +34,7 @@ const canonicalUrl = Astro.site
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalUrl} />
     <title>{title} | {siteConfig.name}</title>
-    <script is:inline>
+    <script is:inline define:vars={{ themeColors }}>
       // 在首帧前确定主题，避免闪烁；页面切换后 <html> 属性会被替换，需要重新应用。
       (() => {
         const apply = () => {
@@ -44,7 +44,7 @@ const canonicalUrl = Astro.site
           } catch {}
           const dark = stored ? stored === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
           document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f1d20' : '#e9efeb');
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? themeColors.dark : themeColors.light);
         };
         apply();
         document.addEventListener('astro:after-swap', apply);

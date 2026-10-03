@@ -5,6 +5,9 @@ export const siteConfig = {
   githubUrl: 'https://github.com/Zhou-Jin-Feng/Blog',
 };
 
+/** 浏览器地址栏颜色，与 global.css 里 --bg 的浅色、深色值保持一致。 */
+export const themeColors = { light: '#e9efeb', dark: '#0f1d20' };
+
 export const navItems = [
   { href: '/', label: '首页' },
   { href: '/blog/', label: '博客' },
@@ -15,36 +18,4 @@ export const navItems = [
   { href: '/resume/', label: '简历' },
   { href: '/timeline/', label: '履历' },
   { href: '/about/', label: '关于' },
-];
-
-export const timelineItems = [
-  {
-    period: 'YYYY-MM',
-    type: '教育 / 项目 / 实践',
-    title: '[待替换] 经历标题',
-    description: '这里填写一段可公开的经历说明，替换真实内容后再发布。',
-    result: '这里填写可验证的成果或承担的职责。',
-  },
-  {
-    period: 'YYYY-MM - YYYY-MM',
-    type: '项目实践',
-    title: '[待替换] 项目经历',
-    description: '这里填写项目背景、目标和公开范围。',
-    result: '这里填写结果、指标或复盘链接。',
-  },
-];
-
-export const resumeSections = [
-  {
-    title: '个人概述',
-    content: '这里替换为一段简洁的个人定位、技术方向和工程实践重点。',
-  },
-  {
-    title: '核心能力',
-    content: '这里替换为经过真实项目验证的语言、框架、工具和协作能力。',
-  },
-  {
-    title: '代表项目',
-    content: '这里替换为项目目标、本人贡献、结果和公开链接。',
-  },
 ];
