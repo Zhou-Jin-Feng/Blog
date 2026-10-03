@@ -1,7 +1,7 @@
 # 重构方案：哪些用轮子，哪些自己做
 
 更新时间：2026-10-03
-状态：方案已确认（2026-10-03）；阶段 1 已合并上线（PR #1）；阶段 2 在分支 `feat/search-and-code-blocks` 完成，待提交
+状态：方案已确认（2026-10-03）；阶段 1、2 已合并上线（PR #1、#2）；收尾项在分支 `chore/search-loading-and-maintenance`；阶段 3 等真实内容替换时开始
 评估基线：`main` @ `3d04865`
 
 ## 1. 背景
@@ -203,6 +203,13 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 - 代码块：`astro-expressive-code` 0.44.2，主题 everforest 浅色/深色，跟随 `<html data-theme>`；界面文字补了中文。`astro.config.mjs` 显式设置 `markdown.processor: satteri()`，否则 Expressive Code 不会挂到 Sätteri 上。删除 `.prose pre` 手写样式。
 - 测试：搜索草稿用例改为直接查 Pagefind 索引；新增卡片锚点、代码块复制按钮和主题切换用例。
 - 实施中发现的两点：Pagefind 一个 `data-pagefind-meta` 属性只认一组 `key:value`，逗号分隔不会拆开；本地改了 Expressive Code 配置后要清 `node_modules/.astro` 缓存才会重新渲染。
+- 本地浏览器测试因本机安全闸门不允许 Playwright 的 Chromium 联网而未跑，以 PR CI 为准，CI 全部通过。2026-10-03 合并到 `main`（`cda73a3`），生产部署确认生效。
+
+收尾项（分支 `chore/search-loading-and-maintenance`）：
+
+- 线上实测发现首次搜索要下载 Pagefind 的脚本、worker 和索引，期间面板仍显示"最近内容"，容易误以为是结果。改为在 Pagefind 就绪前显示"正在加载搜索索引…"，并补了用例（人为延迟 `pagefind.js` 验证提示出现和消失）。
+- `npm audit fix`：`devalue`、`fast-uri`、`undici` 升补丁版本，漏洞数 7 → 4。剩余 4 个都来自 `astro` 依赖的 `http-cache-semantics`，npm 给出的修复是降级到 Astro 2.x，不可行，等上游更新。
+- CI 改用 Node 24，与本机一致；Pages 的 `NODE_VERSION` 需用户在后台同步改为 24。
 
 ## 参考
 
