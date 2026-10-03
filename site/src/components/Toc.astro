@@ -9,7 +9,7 @@ const items = Astro.props.headings.filter((heading) => heading.depth === 2 || he
 ---
 
 {items.length >= 2 && (
-  <nav class="toc" aria-label="本文目录" data-toc>
+  <nav class="toc" aria-label="本文目录" data-toc data-pagefind-ignore>
     <p class="toc-title">本文目录</p>
     <ol>
       {items.map((heading) => (

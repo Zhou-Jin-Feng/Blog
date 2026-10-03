@@ -20,6 +20,7 @@ const { Content, headings } = await render(project);
   transitionName={`project-${project.id}`}
   headings={headings}
   template={project.data.template}
+  kind="project"
 >
   <Fragment slot="meta">
     <p class="detail-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span></p>
@@ -27,7 +28,7 @@ const { Content, headings } = await render(project);
   </Fragment>
   <p class="callout"><strong>本人贡献：</strong>{project.data.role}</p>
   <Content />
-  <nav class="detail-links" aria-label="项目相关链接">
+  <nav class="detail-links" aria-label="项目相关链接" data-pagefind-ignore>
     {project.data.repoUrl && <a class="button secondary" href={project.data.repoUrl}>代码仓库</a>}
     {project.data.demoUrl && <a class="button secondary" href={project.data.demoUrl}>在线 Demo</a>}
     {project.data.videoUrl && <a class="button secondary" href={project.data.videoUrl}>演示视频</a>}

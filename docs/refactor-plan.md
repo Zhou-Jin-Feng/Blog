@@ -1,7 +1,7 @@
 # 重构方案：哪些用轮子，哪些自己做
 
 更新时间：2026-10-03
-状态：方案已确认（2026-10-03）；阶段 1 在分支 `refactor/internal-cleanup` 完成，PR 待合并
+状态：方案已确认（2026-10-03）；阶段 1 已合并上线（PR #1）；阶段 2 在分支 `feat/search-and-code-blocks` 完成，待提交
 评估基线：`main` @ `3d04865`
 
 ## 1. 背景
@@ -194,6 +194,15 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 - `astro` 7.3.1 → 7.3.5、`@astrojs/mdx` 8.0.0 → 8.0.2、`@astrojs/markdown-satteri` 0.4.0 → 0.4.2。
 - 验证：`check` 0 错误；`build` 16 页；`test:e2e` 26/26 通过。与改动前的构建产物逐页对比，除主题色脚本和标题过渡作用域名外，所有 HTML、`search.json`、RSS、sitemap 内容一致，星图布局数据不变。
 - 遗留：`npm audit` 报告 6 个间接依赖漏洞（1 中 5 高，涉及 `devalue`、`fast-uri`、`undici`、`http-cache-semantics`），升级前后数量相同，不是本次引入。
+- 2026-10-03 合并到 `main`（`e6ad37e`），生产部署确认生效，Cloudflare Web Analytics 脚本已注入。
+
+阶段 2 完成情况（分支 `feat/search-and-code-blocks`）：
+
+- 搜索：`pagefind` 1.5.2，构建脚本改为 `astro build && pagefind --site dist`。详情页正文、视频页、下载页标记为索引范围，模板提示、目录、翻页等标记为忽略；类型和日期写进索引元数据。删除 `search.json.ts`，栏目页面的说明移到 `navItems.summary`。
+- 搜索面板保留原有外观和键盘操作：空输入列出最近内容；有输入时栏目页按标题本地匹配，正文交给 Pagefind；视频、下载卡片作为子结果，直接跳到卡片锚点。Pagefind 摘要只保留文字和 `<mark>`。
+- 代码块：`astro-expressive-code` 0.44.2，主题 everforest 浅色/深色，跟随 `<html data-theme>`；界面文字补了中文。`astro.config.mjs` 显式设置 `markdown.processor: satteri()`，否则 Expressive Code 不会挂到 Sätteri 上。删除 `.prose pre` 手写样式。
+- 测试：搜索草稿用例改为直接查 Pagefind 索引；新增卡片锚点、代码块复制按钮和主题切换用例。
+- 实施中发现的两点：Pagefind 一个 `data-pagefind-meta` 属性只认一组 `key:value`，逗号分隔不会拆开；本地改了 Expressive Code 配置后要清 `node_modules/.astro` 缓存才会重新渲染。
 
 ## 参考
 

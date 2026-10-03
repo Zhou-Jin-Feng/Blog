@@ -21,6 +21,8 @@ const { Content, headings } = await render(doc);
   transitionName={`doc-${doc.id}`}
   headings={headings}
   template={doc.data.template}
+  kind="doc"
+  date={doc.data.updatedDate}
 >
   <p class="detail-meta" slot="meta">
     <span class="version">{doc.data.version}</span>
@@ -28,5 +30,5 @@ const { Content, headings } = await render(doc);
     <span>来源：{doc.data.source}</span>
   </p>
   <Content />
-  <p><a href="/docs/">返回文档列表</a></p>
+  <p data-pagefind-ignore><a href="/docs/">返回文档列表</a></p>
 </DetailLayout>

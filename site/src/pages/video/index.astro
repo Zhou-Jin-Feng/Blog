@@ -8,13 +8,13 @@ const projectTitle = new Map(projects.map((project) => [project.id, project.data
 ---
 
 <BaseLayout title="视频" description="项目演示视频和文字摘要。">
-  <div class="container page-shell">
-    <header class="page-header"><h1>视频</h1><p class="lede">每个视频都提供关联项目、摘要和直接访问链接。</p></header>
+  <div class="container page-shell" data-pagefind-body data-pagefind-meta="type:视频">
+    <header class="page-header" data-pagefind-meta="listing:true"><h1>视频</h1><p class="lede">每个视频都提供关联项目、摘要和直接访问链接。</p></header>
     <TemplateNotice />
     <div class="card-grid two-up">
       {videos.map((video) => (
         <article class="card media-card">
-          <div class="media-placeholder" role="img" aria-label="演示视频封面占位">
+          <div class="media-placeholder" role="img" aria-label="演示视频封面占位" data-pagefind-ignore>
             <span>演示视频</span>
             <strong>封面待补充</strong>
           </div>
@@ -24,10 +24,10 @@ const projectTitle = new Map(projects.map((project) => [project.id, project.data
               ? <a href={`/projects/${video.data.projectSlug}/`}>关联项目：{projectTitle.get(video.data.projectSlug)}</a>
               : <span>关联项目：{video.data.projectSlug}</span>}
           </p>
-          <h2>{video.data.title}</h2>
+          <h2 id={`video-${video.id}`}>{video.data.title}</h2>
           <p>{video.data.summary}</p>
           {video.data.template && <TemplateNotice compact />}
-          <p class="card-actions"><a class="button secondary" href={video.data.videoUrl} target="_blank" rel="noreferrer">打开视频链接</a></p>
+          <p class="card-actions" data-pagefind-ignore><a class="button secondary" href={video.data.videoUrl} target="_blank" rel="noreferrer">打开视频链接</a></p>
         </article>
       ))}
     </div>
