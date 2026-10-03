@@ -59,8 +59,15 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 
 ## 本机环境
 
-Windows，系统代理 `127.0.0.1:7897` **不会传给 bash 子进程**。需要出海的命令先在同一条命令里导出：
+Windows，装有安全闸门（Claude Isolated Guard）。所有流量都经闸门代理 `127.0.0.1:17890`，bash 子进程的 `HTTP(S)_PROXY` 默认已指向它，npm、git、gh、curl 直接用即可。**不要手动改用其他代理（包括系统代理 `7897`），不要添加直连绕过，不要关闭防护。**
+
+本地跑 e2e 时，Playwright 启动的浏览器要显式走闸门代理，只靠环境变量不够：
 
 ```bash
-export HTTPS_PROXY=http://127.0.0.1:7897 HTTP_PROXY=http://127.0.0.1:7897 NO_PROXY=localhost,127.0.0.1
+cd site
+PLAYWRIGHT_PROXY=http://127.0.0.1:17890 npm run test:e2e
 ```
+
+PowerShell 下写成 `$env:PLAYWRIGHT_PROXY='http://127.0.0.1:17890'; npm run test:e2e`。本地预览只用 `127.0.0.1` 或 `localhost` 和白名单里的端口：测试用 4321，手动预览用 4399。
+
+闸门按浏览器可执行文件的完整路径审计，即 `%LOCALAPPDATA%\ms-playwright\` 下的 `chromium-<版本>\chrome-win64\chrome.exe` 和 `chromium_headless_shell-<版本>\chrome-headless-shell-win64\chrome-headless-shell.exe`，不是整个目录放行。升级 `@playwright/test` 时如果浏览器版本变了，顺序是：退出相关会话和浏览器 → 升级 → 闸门发现新路径、部署规则并审计通过 → 从专线入口重启后再用。不要在旧会话里直接启动新浏览器"试试看"，也不要通过整目录放行、关闭防护或改用普通代理来解决。
