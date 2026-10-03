@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// 本机装有安全闸门时，测试浏览器必须显式走闸门代理，只靠环境变量不够（见 CLAUDE.md）。CI 不设置这个变量。
+const proxyServer = process.env.PLAYWRIGHT_PROXY;
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -10,6 +13,12 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4321',
     trace: 'on-first-retry',
+    ...(proxyServer && {
+      launchOptions: {
+        proxy: { server: proxyServer },
+        args: ['--disable-quic', '--force-webrtc-ip-handling-policy=disable_non_proxied_udp'],
+      },
+    }),
   },
   projects: [
     {
