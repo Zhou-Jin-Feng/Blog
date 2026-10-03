@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
 import { navItems } from '../data/site';
+import { collectContent } from '../lib/content';
 import { formatDate } from '../lib/format';
+import { kindMeta } from '../lib/kinds';
 
 const pageSummaries: Record<string, string> = {
   '/': '站点首页和内容关系图。',
@@ -16,22 +17,15 @@ const pageSummaries: Record<string, string> = {
 };
 
 export const GET: APIRoute = async () => {
-  const [posts, projects, docs, videos, downloads] = await Promise.all([
-    getCollection('blog', ({ data }) => !data.draft),
-    getCollection('projects'),
-    getCollection('docs'),
-    getCollection('videos'),
-    getCollection('downloads'),
-  ]);
-
   const entries = [
-    ...posts
-      .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
-      .map((post) => ({ type: '文章', title: post.data.title, summary: post.data.description, href: `/blog/${post.id}/`, tags: post.data.tags, date: formatDate(post.data.publishDate) })),
-    ...projects.map((project) => ({ type: '项目', title: project.data.title, summary: project.data.summary, href: `/projects/${project.id}/`, tags: [...project.data.techStack, project.data.status] })),
-    ...docs.map((doc) => ({ type: '文档', title: doc.data.title, summary: doc.data.summary, href: `/docs/${doc.id}/`, tags: [doc.data.version], date: formatDate(doc.data.updatedDate) })),
-    ...videos.map((video) => ({ type: '视频', title: video.data.title, summary: video.data.summary, href: '/video/', tags: [video.data.platform] })),
-    ...downloads.map((item) => ({ type: '下载', title: item.data.title, summary: item.data.summary, href: '/downloads/', tags: [item.data.fileType] })),
+    ...(await collectContent()).map((item) => ({
+      type: kindMeta[item.kind].label,
+      title: item.title,
+      summary: item.summary,
+      href: item.href,
+      tags: [...item.tags, ...item.facets],
+      date: item.date && formatDate(item.date),
+    })),
     ...navItems.map((item) => ({ type: '页面', title: item.label, summary: pageSummaries[item.href] ?? '', href: item.href, tags: [] })),
   ];
 

@@ -1,0 +1,17 @@
+# 履历时间线，按 order 从小到大显示。替换真实内容时把 template 改为 false。
+- id: template-experience
+  order: 1
+  period: "YYYY-MM"
+  type: "教育 / 项目 / 实践"
+  title: "[待替换] 经历标题"
+  description: "这里填写一段可公开的经历说明，替换真实内容后再发布。"
+  result: "这里填写可验证的成果或承担的职责。"
+  template: true
+- id: template-project
+  order: 2
+  period: "YYYY-MM - YYYY-MM"
+  type: "项目实践"
+  title: "[待替换] 项目经历"
+  description: "这里填写项目背景、目标和公开范围。"
+  result: "这里填写结果、指标或复盘链接。"
+  template: true

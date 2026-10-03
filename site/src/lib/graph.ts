@@ -1,6 +1,6 @@
-import { getCollection } from 'astro:content';
+import { collectContent } from './content';
+import { contentKinds, kindMeta, type ContentKind } from './kinds';
 
-export type ContentKind = 'post' | 'project' | 'doc' | 'video' | 'download';
 export type NodeKind = 'root' | 'hub' | 'item' | 'tag';
 export type NodeGroup = ContentKind | 'root' | 'tag';
 
@@ -26,57 +26,13 @@ export interface GraphLink {
 export const GRAPH_WIDTH = 640;
 export const GRAPH_HEIGHT = 520;
 
-export const kindMeta: Record<ContentKind, { label: string; hub: string; href: string; unit: string }> = {
-  post: { label: '文章', hub: '博客', href: '/blog/', unit: '篇文章' },
-  project: { label: '项目', hub: '项目', href: '/projects/', unit: '个项目' },
-  doc: { label: '文档', hub: '文档', href: '/docs/', unit: '份文档' },
-  video: { label: '视频', hub: '视频', href: '/video/', unit: '个视频' },
-  download: { label: '下载', hub: '下载', href: '/downloads/', unit: '份资料' },
-};
-
 const MAX_ITEMS_PER_KIND = 8;
 const MAX_TAGS = 20;
 
-interface Item {
-  key: string;
-  kind: ContentKind;
-  title: string;
-  summary: string;
-  href: string;
-  tags: string[];
-  relatedKey?: string;
-}
-
-async function collectItems(): Promise<Item[]> {
-  const [posts, projects, docs, videos, downloads] = await Promise.all([
-    getCollection('blog', ({ data }) => !data.draft),
-    getCollection('projects'),
-    getCollection('docs'),
-    getCollection('videos'),
-    getCollection('downloads'),
-  ]);
-
-  const items: Item[] = [
-    ...posts
-      .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
-      .slice(0, MAX_ITEMS_PER_KIND)
-      .map((post) => ({ key: `post:${post.id}`, kind: 'post' as const, title: post.data.title, summary: post.data.description, href: `/blog/${post.id}/`, tags: post.data.tags })),
-    ...projects.slice(0, MAX_ITEMS_PER_KIND).map((project) => ({
-      key: `project:${project.id}`, kind: 'project' as const, title: project.data.title, summary: project.data.summary, href: `/projects/${project.id}/`, tags: project.data.techStack,
-    })),
-    ...docs
-      .sort((a, b) => b.data.updatedDate.valueOf() - a.data.updatedDate.valueOf())
-      .slice(0, MAX_ITEMS_PER_KIND)
-      .map((doc) => ({ key: `doc:${doc.id}`, kind: 'doc' as const, title: doc.data.title, summary: doc.data.summary, href: `/docs/${doc.id}/`, tags: [] })),
-    ...videos.slice(0, MAX_ITEMS_PER_KIND).map((video) => ({
-      key: `video:${video.id}`, kind: 'video' as const, title: video.data.title, summary: video.data.summary, href: '/video/', tags: [], relatedKey: `project:${video.data.projectSlug}`,
-    })),
-    ...downloads.slice(0, MAX_ITEMS_PER_KIND).map((item) => ({
-      key: `download:${item.id}`, kind: 'download' as const, title: item.data.title, summary: item.data.summary, href: '/downloads/', tags: [],
-    })),
-  ];
-
-  return items;
+/** 每类内容只取前几条上图，避免节点过密。 */
+async function collectItems() {
+  const items = await collectContent();
+  return contentKinds.flatMap((kind) => items.filter((item) => item.kind === kind).slice(0, MAX_ITEMS_PER_KIND));
 }
 
 /** 字符串哈希 + mulberry32，保证每次构建布局一致。 */
@@ -101,7 +57,7 @@ export async function buildGraph() {
 
   nodes.push({ kind: 'root', group: 'root', label: '', title: '个人工程实践手记', summary: '所有内容从这里展开。', depth: 0, r: 9, x: 0, y: 0 });
 
-  const kinds = (Object.keys(kindMeta) as ContentKind[]).filter((kind) => items.some((item) => item.kind === kind));
+  const kinds = contentKinds.filter((kind) => items.some((item) => item.kind === kind));
   const hubIndex = new Map<ContentKind, number>();
   const counts = new Map<ContentKind, number>();
   kinds.forEach((kind, k) => {

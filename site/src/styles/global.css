@@ -7,7 +7,7 @@
   --font-sans: "HarmonyOS Sans SC", "MiSans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
 
-  --bg: light-dark(#e9efeb, #0f1d20);
+  --bg: light-dark(#e9efeb, #0f1d20); /* 改动时同步 src/data/site.ts 的 themeColors */
   --surface: light-dark(#f8fbf9, #152a2e);
   --surface-2: light-dark(#dfe8e3, #1b3438);
   --ink: light-dark(#17252d, #e3ede9);

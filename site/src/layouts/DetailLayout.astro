@@ -1,0 +1,41 @@
+---
+import type { MarkdownHeading } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import TemplateNotice from '../components/TemplateNotice.astro';
+import Toc from '../components/Toc.astro';
+
+interface Props {
+  title: string;
+  /** 同时用作页面描述和标题下的导语。 */
+  description: string;
+  crumb: { href: string; label: string };
+  /** 与列表页标题共用的过渡名，换页时标题平滑过渡。 */
+  transitionName: string;
+  headings: MarkdownHeading[];
+  template: boolean;
+}
+
+const { title, description, crumb, transitionName, headings, template } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="read-progress" aria-hidden="true"></div>
+  <div class="container page-shell">
+    <article class="article">
+      <header class="detail-header">
+        <p class="crumb"><a href={crumb.href}>{crumb.label}</a></p>
+        <h1 transition:name={transitionName}>{title}</h1>
+        <p class="lede">{description}</p>
+        <slot name="meta" />
+      </header>
+      <div class="article-layout">
+        <div class="prose">
+          {template && <TemplateNotice />}
+          <slot />
+        </div>
+        <Toc headings={headings} />
+      </div>
+      <slot name="after" />
+    </article>
+  </div>
+</BaseLayout>

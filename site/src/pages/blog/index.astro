@@ -1,11 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
 import PostRow from '../../components/PostRow.astro';
+import { getPublishedPosts } from '../../lib/content';
 
-const posts = (await getCollection('blog', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+const posts = await getPublishedPosts();
 const tagCounts = new Map<string, number>();
 for (const post of posts) {
   for (const tag of post.data.tags) tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);

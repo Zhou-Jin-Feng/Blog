@@ -1,7 +1,9 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
-import { timelineItems } from '../../data/site';
+
+const timelineItems = (await getCollection('timeline')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <BaseLayout title="履历" description="教育、项目与实践经历时间线。">
@@ -9,7 +11,7 @@ import { timelineItems } from '../../data/site';
     <header class="page-header"><h1>履历</h1><p class="lede">按时间整理教育、项目和实践经历，与简历摘要互补。</p></header>
     <TemplateNotice />
     <section class="timeline" aria-label="经历时间线">
-      {timelineItems.map((item) => (
+      {timelineItems.map(({ data: item }) => (
         <article class="timeline-item">
           <p class="period">{item.period}<span class="pill">{item.type}</span></p>
           <h2>{item.title}</h2>
