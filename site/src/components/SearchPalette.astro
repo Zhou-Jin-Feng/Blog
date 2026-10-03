@@ -38,6 +38,7 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
     </div>
     <ul class="palette-results" id="palette-results" role="listbox" aria-label="搜索结果" data-palette-results></ul>
     <p class="palette-empty" data-palette-empty hidden>没有找到匹配的内容，换个关键词或标签试试。</p>
+    <p class="palette-empty" data-palette-loading hidden>正在加载搜索索引…</p>
     <p class="palette-foot" aria-hidden="true">
       <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
       <span><kbd>Enter</kbd> 打开</span>
@@ -70,6 +71,8 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
   type PaletteData = { recent: Entry[]; pages: Entry[] };
 
   let pagefind: Promise<Pagefind | undefined> | undefined;
+  /** 首次搜索要下载 Pagefind 的脚本和索引，加载完之前显示提示。 */
+  let engineReady = false;
   const paletteData = new WeakMap<HTMLDialogElement, PaletteData>();
   let results: Entry[] = [];
   let active = 0;
@@ -79,6 +82,7 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
     pagefind ??= import(/* @vite-ignore */ PAGEFIND_URL)
       .then(async (module: Pagefind) => {
         await module.options({ excerptLength: 24 });
+        engineReady = true;
         return module;
       })
       .catch(() => {
@@ -96,6 +100,7 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
       input: dialog.querySelector<HTMLInputElement>('[data-palette-input]')!,
       list: dialog.querySelector<HTMLUListElement>('[data-palette-results]')!,
       empty: dialog.querySelector<HTMLElement>('[data-palette-empty]')!,
+      loading: dialog.querySelector<HTMLElement>('[data-palette-loading]')!,
       status: dialog.querySelector<HTMLElement>('[data-palette-status]')!,
     };
   };
@@ -196,6 +201,7 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
 
     let next = data.recent;
     if (terms.length) {
+      if (!engineReady) showLoading(ui);
       const content = await searchContent(query);
       if (content === undefined || run !== latest) return;
       const { lead, rest } = matchPages(data.pages, terms);
@@ -207,9 +213,19 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
     render(ui, next, terms);
   }
 
+  function showLoading(ui: NonNullable<ReturnType<typeof els>>) {
+    results = [];
+    ui.list.replaceChildren();
+    ui.input.setAttribute('aria-activedescendant', '');
+    ui.empty.hidden = true;
+    ui.loading.hidden = false;
+    ui.status.textContent = '正在加载搜索索引';
+  }
+
   function render(ui: NonNullable<ReturnType<typeof els>>, entries: Entry[], terms: string[]) {
     results = entries;
     active = 0;
+    ui.loading.hidden = true;
     ui.list.replaceChildren(
       ...results.map((entry, i) => {
         const item = document.createElement('li');

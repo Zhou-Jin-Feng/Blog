@@ -21,7 +21,7 @@ npm run build      # 生产构建，结束后用 Pagefind 生成搜索索引
 npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 ```
 
-需要 Node.js >= 22.12.0。CI（`.github/workflows/ci.yml`）在 push 到 `main` 和 PR 上跑 `check` → `build` → `test:e2e`，改完代码本地至少过一遍这三步再说完成。
+需要 Node.js >= 22.12.0，本机、CI 和 Pages 统一用 Node 24。CI（`.github/workflows/ci.yml`）在 push 到 `main` 和 PR 上跑 `check` → `build` → `test:e2e`，改完代码本地至少过一遍这三步再说完成。
 
 - 搜索索引只在 `build` 时生成，`astro dev` 下搜索面板搜不到正文；调搜索要先 build，再 `npm run preview`。
 - 改了 Markdown 渲染相关的配置（如 `astro.config.mjs` 里的 Expressive Code）后，先删 `site/node_modules/.astro` 再 build，否则会沿用缓存里的旧渲染结果。
@@ -53,7 +53,7 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 
 ## 部署
 
-生产地址 https://blog-4cr.pages.dev 。Pages 配置：生产分支 `main`，Root directory `site`，Build command `npm run build`，输出 `dist`，环境变量 `NODE_VERSION=22` 和 `SITE_URL=https://blog-4cr.pages.dev`。
+生产地址 https://blog-4cr.pages.dev 。Pages 配置：生产分支 `main`，Root directory `site`，Build command `npm run build`，输出 `dist`，环境变量 `NODE_VERSION=24` 和 `SITE_URL=https://blog-4cr.pages.dev`。
 
 本地未设 `SITE_URL` 时，sitemap 和 canonical 回退到 `http://localhost:4321`。
 

@@ -53,6 +53,21 @@ test.describe('Interactive enhancements', () => {
     await expect(palette).toBeHidden();
   });
 
+  test('search palette shows a loading state until Pagefind is ready', async ({ page }) => {
+    // 人为拖慢 Pagefind 的下载，模拟首次搜索时的冷启动。
+    await page.route('**/pagefind/pagefind.js', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      await route.continue();
+    });
+    await page.goto('/');
+    await page.keyboard.press('Control+k');
+    await page.locator('[data-palette-input]').fill('发布前');
+    const loading = page.locator('[data-palette-loading]');
+    await expect(loading).toBeVisible();
+    await expect(page.locator('[data-palette] [role="option"]').first()).toContainText('一次发布前检查清单');
+    await expect(loading).toBeHidden();
+  });
+
   test('search palette links cards on listing pages to their anchors', async ({ page }) => {
     await page.goto('/');
     await page.keyboard.press('Control+k');
