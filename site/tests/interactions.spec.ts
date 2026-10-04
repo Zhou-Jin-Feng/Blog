@@ -157,4 +157,41 @@ test.describe('Interactive enhancements', () => {
     await expect(graph).toHaveClass(/use-sprites/);
     await context.close();
   });
+
+  test('graph labels never cover each other or other nodes', async ({ browser, isMobile }) => {
+    test.skip(isMobile, '窄屏是紧凑模式，技术栈标签的文字不显示');
+    // 1060px 宽时星图刚好不进紧凑模式，标签字号最大，最容易重叠。
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await context.newPage();
+    for (const width of [1060, 1280, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      // 等 ResizeObserver 按当前宽度更新完标签字号再量。
+      await page.waitForFunction(() => {
+        const figure = document.querySelector<HTMLElement>('[data-graph]')!;
+        const svg = figure.querySelector('svg')!;
+        const expected = 1 / Math.pow(svg.clientWidth / svg.viewBox.baseVal.width, 0.75);
+        return !figure.classList.contains('is-compact') && Math.abs(parseFloat(figure.style.getPropertyValue('--lk')) - expected) < 1e-3;
+      });
+      const collisions = await page.locator('[data-graph]').evaluate((figure) => {
+        const shapes = [...figure.querySelectorAll('.node')].flatMap((node, owner) => {
+          const text = node.querySelector('text');
+          return [
+            { owner, name: `dot ${owner}`, isText: false, box: node.querySelector('.dot')!.getBoundingClientRect() },
+            ...(text ? [{ owner, name: text.textContent!, isText: true, box: text.getBoundingClientRect() }] : []),
+          ];
+        });
+        const found: string[] = [];
+        shapes.forEach((a, i) => shapes.slice(i + 1).forEach((b) => {
+          if (a.owner === b.owner || (!a.isText && !b.isText)) return;
+          const x = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+          const y = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+          if (x > 0.5 && y > 0.5) found.push(`${a.name} × ${b.name}`);
+        }));
+        return found;
+      });
+      expect(collisions, `${width}px`).toEqual([]);
+    }
+    await context.close();
+  });
 });

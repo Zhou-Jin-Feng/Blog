@@ -1,3 +1,4 @@
+import { forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, type SimulationLinkDatum, type SimulationNodeDatum } from 'd3-force';
 import { collectContent } from './content';
 import { contentKinds, kindMeta, type ContentKind } from './kinds';
 
@@ -60,9 +61,20 @@ export async function buildGraph() {
   const kinds = contentKinds.filter((kind) => items.some((item) => item.kind === kind));
   const hubIndex = new Map<ContentKind, number>();
   const counts = new Map<ContentKind, number>();
+  const sectors = new Map<ContentKind, { angle: number; sector: number }>();
+  // 栏目按子树大小分扇区（1 + 内容数 + 标签数的一半），第一个栏目居中朝上。内容多的栏目角度大，标签不会挤在一侧。
+  const weights = kinds.map((kind) => {
+    const own = items.filter((item) => item.kind === kind);
+    return 1 + own.length + new Set(own.flatMap((item) => item.tags)).size / 2;
+  });
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  let sectorStart = -Math.PI / 2 - (weights[0] / total) * Math.PI;
   kinds.forEach((kind, k) => {
     const count = items.filter((item) => item.kind === kind).length;
-    const angle = -Math.PI / 2 + (k / kinds.length) * Math.PI * 2;
+    const sector = (weights[k] / total) * Math.PI * 2;
+    const angle = sectorStart + sector / 2;
+    sectorStart += sector;
+    sectors.set(kind, { angle, sector });
     counts.set(kind, count);
     hubIndex.set(kind, nodes.length);
     links.push({ source: 0, target: nodes.length, kind: 'tree' });
@@ -76,8 +88,11 @@ export async function buildGraph() {
   const itemIndex = new Map<string, number>();
   for (const item of items) {
     const hub = hubIndex.get(item.kind)!;
-    const random = seeded(item.key);
-    const base = Math.atan2(nodes[hub].y, nodes[hub].x) + (random() - 0.5) * 1.2;
+    // 同栏目的内容在扇区内均匀排开，再加一点确定的抖动。
+    const siblings = items.filter((other) => other.kind === item.kind);
+    const { angle, sector } = sectors.get(item.kind)!;
+    const step = Math.min((sector * 0.8) / siblings.length, 0.6);
+    const base = angle + (siblings.indexOf(item) - (siblings.length - 1) / 2) * step + (seeded(item.key)() - 0.5) * 0.15;
     itemIndex.set(item.key, nodes.length);
     links.push({ source: hub, target: nodes.length, kind: 'tree' });
     nodes.push({
@@ -98,9 +113,13 @@ export async function buildGraph() {
   }
   const tags = [...tagUsage.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, MAX_TAGS);
   for (const [tag, keys] of tags) {
-    const first = nodes[itemIndex.get(keys[0])!];
-    const random = seeded(`tag:${tag}`);
-    const angle = Math.atan2(first.y, first.x) + (random() - 0.5) * 0.9;
+    // 放在所有关联内容的平均方向上：共享的标签落在几条内容之间，专属的标签靠向各自的内容。
+    const direction = keys.reduce((sum, key) => {
+      const item = nodes[itemIndex.get(key)!];
+      const length = Math.hypot(item.x, item.y) || 1;
+      return { x: sum.x + item.x / length, y: sum.y + item.y / length };
+    }, { x: 0, y: 0 });
+    const angle = Math.atan2(direction.y, direction.x) + (seeded(`tag:${tag}`)() - 0.5) * 0.3;
     const index = nodes.length;
     nodes.push({
       kind: 'tag', group: 'tag', label: tag, title: tag, summary: `关联 ${keys.length} 条内容`,
@@ -118,103 +137,145 @@ export async function buildGraph() {
   };
 }
 
-/** 构建期的力导向布局：连线弹簧 + 节点斥力 + 向心力 + 碰撞，跑完再缩放进固定画布。 */
+/** 标签字号（SVG 单位），与 global.css 的 `.graph text` 一致。 */
+const TAG_FONT = 11.5;
+const HUB_FONT = 13.5;
+/**
+ * 浏览器端用 `--lk` 放大标签，画布越窄字越大；窄于 520px 进入紧凑模式、隐藏标签文字（见 ContentGraph.astro）。
+ * 所以按 520px 宽时的字号估算标签占位，更宽的屏幕上只会更松。
+ */
+const LABEL_SCALE = Math.pow(GRAPH_WIDTH / 520, 0.75);
+
+/** 估算文字宽度：汉字约 1em，ASCII 约 0.6em。 */
+function textWidth(text: string, size: number) {
+  let em = 0;
+  for (const ch of text) em += ch.charCodeAt(0) < 0x2e80 ? 0.6 : 1.02;
+  return em * size;
+}
+
+type Box = [left: number, top: number, right: number, bottom: number];
+
+/** 节点连同标签占用的矩形，坐标相对节点中心。标签摆放与 ContentGraph.astro 的 labelOf 一致。 */
+function boxOf(node: GraphNode, x: number): Box {
+  const { r } = node;
+  if (node.kind === 'tag') {
+    const size = TAG_FONT * LABEL_SCALE;
+    const reach = r + 5 + textWidth(node.label, size) + 2;
+    const half = size * 0.6 + 1;
+    return x >= 0 ? [-r - 2, -half, reach, half] : [-reach, -half, r + 2, half];
+  }
+  if (node.kind === 'hub') {
+    const size = HUB_FONT * LABEL_SCALE;
+    const half = Math.max(r + 6, textWidth(node.label, size) / 2 + 2);
+    return [-half, -(r + 6), half, r + 17 + size * 0.2 + 2];
+  }
+  const pad = r + (node.kind === 'root' ? 6 : 5);
+  return [-pad, -pad, pad, pad];
+}
+
+interface SimNode extends SimulationNodeDatum {
+  node: GraphNode;
+}
+
+interface SimLink extends SimulationLinkDatum<SimNode> {
+  kind: GraphLink['kind'];
+}
+
+/** 矩形碰撞。forceCollide 只认圆，而标签是横向的长条，所以按矩形推开，沿重叠较少的方向。 */
+function forceBoxes(gap: number) {
+  let list: SimNode[] = [];
+  const force = () => {
+    for (let i = 0; i < list.length; i += 1) {
+      for (let j = i + 1; j < list.length; j += 1) {
+        const a = list[i];
+        const b = list[j];
+        const ax = a.x! + a.vx!;
+        const ay = a.y! + a.vy!;
+        const bx = b.x! + b.vx!;
+        const by = b.y! + b.vy!;
+        const ba = boxOf(a.node, ax);
+        const bb = boxOf(b.node, bx);
+        const overlapX = Math.min(ax + ba[2], bx + bb[2]) - Math.max(ax + ba[0], bx + bb[0]) + gap;
+        const overlapY = Math.min(ay + ba[3], by + bb[3]) - Math.max(ay + ba[1], by + bb[1]) + gap;
+        if (overlapX <= 0 || overlapY <= 0) continue;
+        // 固定的节点（起点）不动，由另一方全部让开。
+        const shareA = a.fx != null ? 0 : b.fx != null ? 1 : 0.5;
+        if (overlapX < overlapY) {
+          const dir = bx + (bb[0] + bb[2]) / 2 >= ax + (ba[0] + ba[2]) / 2 ? 1 : -1;
+          a.vx! -= dir * overlapX * shareA;
+          b.vx! += dir * overlapX * (1 - shareA);
+        } else {
+          const dir = by + (bb[1] + bb[3]) / 2 >= ay + (ba[1] + ba[3]) / 2 ? 1 : -1;
+          a.vy! -= dir * overlapY * shareA;
+          b.vy! += dir * overlapY * (1 - shareA);
+        }
+      }
+    }
+  };
+  force.initialize = (nodes: SimNode[]) => {
+    list = nodes;
+  };
+  return force;
+}
+
+/** 把节点连同标签限制在画布内。布局不再整体缩放，标签占位才能和实际显示一致。 */
+function forceBounds(margin: number) {
+  let list: SimNode[] = [];
+  const force = () => {
+    for (const item of list) {
+      const box = boxOf(item.node, item.x!);
+      const x = item.x! + item.vx!;
+      const y = item.y! + item.vy!;
+      const [minX, maxX] = [-GRAPH_WIDTH / 2 + margin - box[0], GRAPH_WIDTH / 2 - margin - box[2]];
+      const [minY, maxY] = [-GRAPH_HEIGHT / 2 + margin - box[1], GRAPH_HEIGHT / 2 - margin - box[3]];
+      if (x < minX) item.vx! += minX - x;
+      else if (x > maxX) item.vx! += maxX - x;
+      if (y < minY) item.vy! += minY - y;
+      else if (y > maxY) item.vy! += maxY - y;
+    }
+  };
+  force.initialize = (nodes: SimNode[]) => {
+    list = nodes;
+  };
+  return force;
+}
+
+/** 构建期的力导向布局（d3-force）：连线弹簧 + 节点斥力 + 向心力 + 矩形碰撞 + 画布边界。起点固定在原点。 */
 function layout(nodes: GraphNode[], links: GraphLink[]) {
-  const n = nodes.length;
-  const vx = new Float64Array(n);
-  const vy = new Float64Array(n);
-  const degree = new Array<number>(n).fill(0);
-  for (const link of links) {
-    degree[link.source] += 1;
-    degree[link.target] += 1;
+  const simNodes: SimNode[] = nodes.map((node) => ({
+    node, x: node.x, y: node.y, ...(node.kind === 'root' && { fx: 0, fy: 0 }),
+  }));
+  const simLinks: SimLink[] = links.map(({ source, target, kind }) => ({ source, target, kind }));
+  const charge = { root: -500, hub: -420, item: -420, tag: -180 };
+
+  const degree = new Array<number>(nodes.length).fill(0);
+  for (const { source, target } of links) {
+    degree[source] += 1;
+    degree[target] += 1;
   }
-  const charge = nodes.map((node) => (node.kind === 'root' || node.kind === 'hub' ? -520 : node.kind === 'item' ? -260 : -110));
-  const pad = nodes.map((node) => (node.kind === 'tag' ? 16 : node.kind === 'hub' ? 22 : 12));
-  const distance = links.map((link) => {
-    if (link.kind === 'relation') return 140;
-    if (link.kind === 'tag') return 46;
-    return nodes[link.source].kind === 'root' ? 100 : 76;
+  // 强度沿用 d3 的默认公式（1 / 两端较小的度数）；关联线只是提示，拉得轻一点。
+  const strength = links.map((l) => (l.kind === 'relation' ? 0.1 : 1 / Math.min(degree[l.source], degree[l.target])));
+  const distance = links.map((l) => {
+    if (l.kind === 'relation') return 140;
+    if (l.kind === 'tag') return 70;
+    return nodes[l.source].kind === 'root' ? 75 : 60;
   });
-  const strength = links.map((link) => (link.kind === 'relation' ? 0.15 : 1 / Math.min(degree[link.source], degree[link.target])));
 
-  const iterations = 360;
-  const alphaDecay = 1 - Math.pow(0.001, 1 / iterations);
-  let alpha = 1;
+  const simulation = forceSimulation(simNodes)
+    .force('link', forceLink<SimNode, SimLink>(simLinks).distance((_, i) => distance[i]).strength((_, i) => strength[i]))
+    .force('charge', forceManyBody<SimNode>().strength(({ node }) => charge[node.kind]))
+    .force('x', forceX<SimNode>(0).strength(0.05))
+    .force('y', forceY<SimNode>(0).strength(0.0625))
+    // 标签沿外圈散开，不往一处堆。
+    .force('ring', forceRadial<SimNode>(235).strength(({ node }) => (node.kind === 'tag' ? 0.1 : 0)))
+    .force('boxes', forceBoxes(3))
+    .force('bounds', forceBounds(8))
+    .stop();
+  // 静态布局的标准写法：一次跑完到 alphaMin 所需的步数。
+  simulation.tick(Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay())));
 
-  for (let step = 0; step < iterations; step += 1) {
-    alpha += (0 - alpha) * alphaDecay;
-
-    links.forEach((link, l) => {
-      const s = link.source;
-      const t = link.target;
-      let dx = nodes[t].x + vx[t] - nodes[s].x - vx[s];
-      let dy = nodes[t].y + vy[t] - nodes[s].y - vy[s];
-      const length = Math.hypot(dx, dy) || 1e-6;
-      const k = ((length - distance[l]) / length) * alpha * strength[l];
-      dx *= k;
-      dy *= k;
-      const bias = degree[s] / (degree[s] + degree[t]);
-      vx[t] -= dx * bias;
-      vy[t] -= dy * bias;
-      vx[s] += dx * (1 - bias);
-      vy[s] += dy * (1 - bias);
-    });
-
-    for (let i = 0; i < n; i += 1) {
-      for (let j = i + 1; j < n; j += 1) {
-        const dx = nodes[j].x - nodes[i].x;
-        const dy = nodes[j].y - nodes[i].y;
-        const d2 = Math.max(dx * dx + dy * dy, 1);
-        vx[i] += (dx * charge[j] * alpha) / d2;
-        vy[i] += (dy * charge[j] * alpha) / d2;
-        vx[j] -= (dx * charge[i] * alpha) / d2;
-        vy[j] -= (dy * charge[i] * alpha) / d2;
-      }
-    }
-
-    for (let i = 0; i < n; i += 1) {
-      vx[i] -= nodes[i].x * 0.03 * alpha;
-      vy[i] -= nodes[i].y * 0.03 * alpha;
-      if (nodes[i].kind === 'root') {
-        vx[i] = 0;
-        vy[i] = 0;
-        continue;
-      }
-      vx[i] *= 0.6;
-      vy[i] *= 0.6;
-      nodes[i].x += vx[i];
-      nodes[i].y += vy[i];
-    }
-
-    for (let i = 0; i < n; i += 1) {
-      for (let j = i + 1; j < n; j += 1) {
-        const dx = nodes[j].x - nodes[i].x;
-        const dy = nodes[j].y - nodes[i].y;
-        const d = Math.hypot(dx, dy) || 1e-6;
-        const min = nodes[i].r + nodes[j].r + Math.max(pad[i], pad[j]);
-        if (d >= min) continue;
-        const push = ((min - d) / d) * 0.5;
-        if (nodes[i].kind !== 'root') {
-          nodes[i].x -= dx * push;
-          nodes[i].y -= dy * push;
-        }
-        if (nodes[j].kind !== 'root') {
-          nodes[j].x += dx * push;
-          nodes[j].y += dy * push;
-        }
-      }
-    }
-  }
-
-  // 标签文字会向外伸出，左右多留边距。
-  const xs = nodes.map((node) => node.x);
-  const ys = nodes.map((node) => node.y);
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const scale = Math.min((GRAPH_WIDTH - 200) / Math.max(maxX - minX, 1), (GRAPH_HEIGHT - 90) / Math.max(maxY - minY, 1), 1.5);
-  const cx = (minX + maxX) / 2;
-  const cy = (minY + maxY) / 2;
-  for (const node of nodes) {
-    node.x = Math.round((node.x - cx) * scale * 10) / 10;
-    node.y = Math.round((node.y - cy) * scale * 10) / 10;
+  for (const { node, x, y } of simNodes) {
+    node.x = Math.round(x! * 10) / 10;
+    node.y = Math.round(y! * 10) / 10;
   }
 }
