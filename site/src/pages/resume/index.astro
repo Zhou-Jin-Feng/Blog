@@ -4,26 +4,34 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
 
 const resumeSections = (await getCollection('resume')).sort((a, b) => a.data.order - b.data.order);
+const hasTemplate = resumeSections.some(({ data }) => data.template);
+
+/** “标签：内容”拆成两段，标签加粗。 */
+const splitLabel = (item: string) => {
+  const at = item.indexOf('：');
+  return at > 0 ? { label: item.slice(0, at), text: item.slice(at + 1) } : { label: '', text: item };
+};
 ---
 
-<BaseLayout title="简历" description="网页版简历摘要和脱敏 PDF 下载入口。">
+<BaseLayout title="简历" description="求职意向、教育背景、专业技能和项目经历摘要。">
   <div class="container page-shell">
-    <header class="page-header"><h1>简历</h1><p class="lede">网页版摘要与可下载 PDF 保持互补，真实内容替换后再用于公开展示。</p></header>
-    <TemplateNotice />
+    <header class="page-header"><h1>简历</h1><p class="lede">简历摘要，项目细节见各项目页。</p></header>
+    {hasTemplate && <TemplateNotice />}
     <section class="resume-sheet" aria-label="简历摘要">
       {resumeSections.map(({ data: section }) => (
-        <article class="resume-block">
+        <article class:list={['resume-block', { 'is-wide': section.items }]}>
           <h2>{section.title}</h2>
-          <p>{section.content}</p>
+          {section.content && <p>{section.content}</p>}
+          {section.items && (
+            <ul>
+              {section.items.map((item) => {
+                const { label, text } = splitLabel(item);
+                return <li>{label && <strong>{label}：</strong>}{text}</li>;
+              })}
+            </ul>
+          )}
         </article>
       ))}
-    </section>
-    <section class="section download-band" aria-labelledby="resume-download">
-      <div>
-        <h2 id="resume-download">下载 PDF</h2>
-        <p>当前为已脱敏的模板文件，不代表真实个人履历。</p>
-      </div>
-      <a class="button" href="/downloads/resume-template.pdf" download>下载模板 PDF</a>
     </section>
   </div>
 </BaseLayout>

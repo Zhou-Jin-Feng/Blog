@@ -334,13 +334,14 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
   @keyframes dot-on { from { background: var(--bg); box-shadow: 0 0 0 1px var(--line-strong); } }
 }
 
-.resume-sheet { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1px; border: 1px solid var(--line); border-radius: 20px; background: var(--line); overflow: hidden; }
-.resume-block { padding: 1.6rem; background: var(--surface); }
+/* 用弹性换行而不是网格：每行最后一块自动撑满，不留空格子。 */
+.resume-sheet { display: flex; flex-wrap: wrap; gap: 1px; border: 1px solid var(--line); border-radius: 20px; background: var(--line); overflow: hidden; }
+.resume-block { flex: 1 1 17rem; padding: 1.6rem; background: var(--surface); }
 .resume-block h2 { font-size: 1.15rem; }
 .resume-block p { margin: 0; color: var(--muted); }
-.download-band { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; }
-.download-band h2 { margin-bottom: 0.3rem; }
-.download-band p { margin: 0; color: var(--muted); }
+.resume-block.is-wide { flex-basis: 100%; }
+.resume-block ul { display: grid; gap: 0.55rem; margin: 0; padding-left: 1.1rem; color: var(--muted); }
+.resume-block li strong { color: var(--ink); }
 
 .media-card { padding: 1rem 1rem 1.5rem; }
 .media-card > :not(.media-placeholder) { margin-inline: 0.6rem; }

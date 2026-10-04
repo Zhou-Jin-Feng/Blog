@@ -27,10 +27,9 @@ test.describe('Stage 2 P0 route baseline', () => {
   test('representative detail and download routes respond successfully', async ({ request }) => {
     const routes = [
       '/blog/template-architecture/',
-      '/projects/template-rag/',
+      '/projects/documind/',
       '/docs/template-content-model/',
       '/downloads/project-report-template.md',
-      '/downloads/resume-template.pdf',
     ];
 
     for (const route of routes) {

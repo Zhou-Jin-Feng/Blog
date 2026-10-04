@@ -1,16 +1,33 @@
-# 网页版简历的各个段落，按 order 从小到大显示。替换真实内容时把 template 改为 false。
-- id: summary
+# 网页版简历的各个段落，按 order 从小到大显示。content 是一段话，items 是条目列表，至少填一项。
+# 内容来自 2026-10 版简历；不公开真实姓名、照片和手机号。
+- id: target
   order: 1
-  title: "个人概述"
-  content: "这里替换为一段简洁的个人定位、技术方向和工程实践重点。"
-  template: true
-- id: skills
+  title: "求职意向"
+  content: "AI 应用开发 / AI Agent 工程师，意向城市：深圳、广州。"
+  template: false
+- id: summary
   order: 2
-  title: "核心能力"
-  content: "这里替换为经过真实项目验证的语言、框架、工具和协作能力。"
-  template: true
-- id: projects
+  title: "个人概述"
+  content: "面向 AI 应用开发，具备 RAG 检索、LangGraph 工作流与前后端交付实践；重视证据溯源、可恢复执行、接口契约与质量 / 延迟的评测取舍。"
+  template: false
+- id: education
   order: 3
-  title: "代表项目"
-  content: "这里替换为项目目标、本人贡献、结果和公开链接。"
-  template: true
+  title: "教育背景"
+  content: "海南大学（211）｜人工智能本科｜2022.09 - 2026.06。主修数据结构与算法、计算机网络、操作系统、机器学习、深度学习；英语四级。"
+  template: false
+- id: skills
+  order: 4
+  title: "专业技能"
+  items:
+    - "大模型应用 / RAG：文档解析与分块、Embedding、Milvus、Dense / BM25 / Hybrid-RRF、Cross-Encoder 重排；MRR / nDCG / Recall 检索评测、引用溯源、结构化输出与拒答降级。"
+    - "Agent / 工作流：LangGraph 状态编排、Send 动态扇出、interrupt 人工审批、checkpoint 恢复；幂等执行、预算预留与调用账本；论断级证据核验、范围上下文与有界补证。"
+    - "后端 / 工程交付：Python asyncio、FastAPI、Pydantic、SSE、SQLite；Docker / Compose、Git、GitHub Actions；自动化测试、接口契约与日志指标监控。"
+    - "补充技术：React / TypeScript / Vite、Linux Shell；Transformer / PyTorch 基础；使用 Claude Code / Codex / Cursor 辅助开发；Agent Skill 与 MCP 工具接入。"
+  template: false
+- id: projects
+  order: 5
+  title: "项目经历"
+  items:
+    - "ScholarTrace：证据可追溯的多智能体学术研究工作台（2026.08 - 至今），详见项目页。"
+    - "DocuMind：支持可选重排的 RAG 知识库系统（2026.08 - 至今），详见项目页。"
+  template: false
