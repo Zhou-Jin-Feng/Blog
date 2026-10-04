@@ -4,12 +4,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
 
 const timelineItems = (await getCollection('timeline')).sort((a, b) => a.data.order - b.data.order);
+const hasTemplate = timelineItems.some(({ data }) => data.template);
 ---
 
 <BaseLayout title="履历" description="教育、项目与实践经历时间线。">
   <div class="container page-shell">
     <header class="page-header"><h1>履历</h1><p class="lede">按时间整理教育、项目和实践经历，与简历摘要互补。</p></header>
-    <TemplateNotice />
+    {hasTemplate && <TemplateNotice />}
     <section class="timeline" aria-label="经历时间线">
       {timelineItems.map(({ data: item }) => (
         <article class="timeline-item">

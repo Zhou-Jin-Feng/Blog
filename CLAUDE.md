@@ -7,6 +7,7 @@
 - `site/` — Astro 站点，**所有 npm 命令都从这里跑**，不在仓库根跑。
 - `docs/` — 公开的规划、执行、发布文档，是项目的事实来源。
 - `agent/` — 流程记录与可复用经验，不纳入交付。
+- `private/` — 本地私有资料（如简历原件），已加入 `.gitignore`，不提交。网站内容只能从这里提取用户同意公开的信息。
 
 `site/CLAUDE.md` 和 `site/AGENTS.md` 是 Astro 脚手架自动生成的样板，只有通用文档链接，本文件优先。
 
@@ -38,7 +39,7 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 | `videos` | `title` `summary` `projectSlug` `platform`（Bilibili/YouTube/其他）`videoUrl` |
 | `downloads` | `title` `summary` `version` `updatedDate` `fileType` `fileSize` `downloadUrl` |
 | `timeline`（`src/content/timeline.yaml`） | `id` `order` `period` `type` `title` `description` `result` |
-| `resume`（`src/content/resume.yaml`） | `id` `order` `title` `content` |
+| `resume`（`src/content/resume.yaml`） | `id` `order` `title`，`content`（一段话）和 `items`（条目列表）至少填一项 |
 
 每个 collection 都有 `template` 字段，默认 `true`，用来标记模板占位内容。换成真实内容时要显式设 `false`。
 

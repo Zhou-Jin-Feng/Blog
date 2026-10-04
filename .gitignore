@@ -23,6 +23,9 @@ Thumbs.db
 # Agent工作文件（不提交）
 agent/
 
+# 本地私有资料：简历原件等含个人信息的文件（不提交）
+private/
+
 # Temporary artifact work files
 tmp/
 

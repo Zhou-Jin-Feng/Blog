@@ -1,21 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import TemplateNotice from '../../components/TemplateNotice.astro';
 import { siteConfig } from '../../data/site';
 ---
 
 <BaseLayout title="关于" description="个人介绍、技术方向和公开联系方式。">
   <div class="container page-shell">
-    <header class="page-header"><h1>关于</h1><p class="lede">这里是个人介绍、技术方向和公开联系方式的入口。</p></header>
-    <TemplateNotice />
+    <header class="page-header"><h1>关于</h1><p class="lede">AI 应用开发方向，关注 RAG 检索、LangGraph 工作流和前后端交付。</p></header>
     <section class="prose">
       <h2>个人介绍</h2>
-      <p>这里替换为真实的个人介绍、学习方向和工程实践范围。</p>
+      <p>海南大学人工智能专业本科（2022.09 - 2026.06），求职方向是 AI 应用开发 / AI Agent 工程师，意向城市深圳、广州。</p>
+      <p>目前在做两个相互配合的个人项目：<a href="/projects/documind/">DocuMind</a> 是支持可选重排的 RAG 知识库，<a href="/projects/scholartrace/">ScholarTrace</a> 是在它之上构建、证据可追溯的多智能体学术研究工作台。</p>
       <h2>技术方向</h2>
-      <p>这里替换为经过项目验证的技术栈、关注的问题和持续学习计划。</p>
+      <p>重视证据溯源、可恢复执行和接口契约，习惯用冻结评测集做质量与延迟的取舍。主要技术栈是 Python、FastAPI、LangGraph、Milvus 和 React / TypeScript，日常用 Claude Code、Codex、Cursor 辅助开发。</p>
       <h2>公开联系方式</h2>
-      <p><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></p>
-      <p><a href={siteConfig.githubUrl} target="_blank" rel="noreferrer">GitHub 主页</a></p>
+      <ul>
+        <li>邮箱：<a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a></li>
+        <li>微信：{siteConfig.wechat}</li>
+        <li>GitHub：<a href={siteConfig.githubUrl} target="_blank" rel="noreferrer">Zhou-Jin-Feng</a></li>
+      </ul>
     </section>
   </div>
 </BaseLayout>

@@ -2,7 +2,9 @@ export const siteConfig = {
   name: '个人工程实践手记',
   description: '记录学习笔记、技术文档与个人工程实践的中文博客模板。',
   email: '2644897763@qq.com',
-  githubUrl: 'https://github.com/Zhou-Jin-Feng/Blog',
+  wechat: 'ZJF2644897763',
+  // 博客仓库是私有的，访客打不开，这里指向个人主页。
+  githubUrl: 'https://github.com/Zhou-Jin-Feng',
 };
 
 /** 浏览器地址栏颜色，与 global.css 里 --bg 的浅色、深色值保持一致。 */

@@ -89,12 +89,16 @@ const timeline = defineCollection({
 
 const resume = defineCollection({
   loader: file('./src/content/resume.yaml'),
-  schema: z.object({
-    order: z.number().int(),
-    title: z.string().min(1),
-    content: z.string().min(1),
-    template: z.boolean().default(true),
-  }),
+  schema: z
+    .object({
+      order: z.number().int(),
+      title: z.string().min(1),
+      content: z.string().min(1).optional(),
+      /** 条目以“标签：内容”书写时，标签会加粗显示。 */
+      items: z.array(z.string().min(1)).min(1).optional(),
+      template: z.boolean().default(true),
+    })
+    .refine((data) => data.content || data.items, { message: 'content 和 items 至少填写一项' }),
 });
 
 export const collections = { blog, projects, docs, videos, downloads, timeline, resume };
