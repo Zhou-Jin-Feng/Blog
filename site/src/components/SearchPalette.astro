@@ -56,17 +56,26 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
   type PagefindData = {
     url: string;
     excerpt: string;
+    /** 整页的纯文本。 */
+    content: string;
     meta: Record<string, string | undefined>;
     sub_results: { url: string; title: string; excerpt: string }[];
   };
+  type SearchResponse = { results: { data: () => Promise<PagefindData> }[] };
   type Pagefind = {
     options: (options: Record<string, unknown>) => Promise<void>;
-    debouncedSearch: (term: string, options?: object, timeout?: number) => Promise<{ results: { data: () => Promise<PagefindData> }[] } | null>;
+    search: (term: string) => Promise<SearchResponse>;
+    debouncedSearch: (term: string, options?: object, timeout?: number) => Promise<SearchResponse | null>;
   };
 
   // 索引由构建脚本里的 pagefind 生成，astro dev 下不存在。用变量拼路径，避免 Vite 去解析它。
   const PAGEFIND_URL = '/pagefind/pagefind.js';
   const MAX_RESULTS = 12;
+  /** 中文补充匹配时最多核对的候选页数。 */
+  const CANDIDATE_LIMIT = 40;
+  /** 连续两个及以上的汉字。 */
+  const CJK_RUN = /[㐀-鿿豈-﫿]{2,}/g;
+  const segmenter = 'Segmenter' in Intl ? new Intl.Segmenter('zh', { granularity: 'word' }) : undefined;
 
   type PaletteData = { recent: Entry[]; pages: Entry[] };
 
@@ -174,13 +183,55 @@ const payload = JSON.stringify({ recent, pages }).replace(/</g, '\\u003c');
     return [{ type, title: data.meta.title ?? '', summary: '', excerpt: data.excerpt, href: data.url, date: data.meta.date }];
   }
 
+  const escapeHtml = (text: string) => text.replace(/[&<>"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]!);
+  const stripTags = (html: string) => html.replace(/<[^>]*>/g, '');
+
+  /** 在原文里截取命中处前后的一段，命中的词用 <mark> 包起来，格式与 Pagefind 的摘要一致。 */
+  function excerptAround(content: string, run: string) {
+    const at = content.indexOf(run);
+    const start = Math.max(0, at - 20);
+    const end = Math.min(content.length, at + run.length + 40);
+    return `${start > 0 ? '…' : ''}${escapeHtml(content.slice(start, at))}<mark>${escapeHtml(run)}</mark>${escapeHtml(content.slice(at + run.length, end))}${end < content.length ? '…' : ''}`;
+  }
+
+  /**
+   * Pagefind 建索引时“镜像”“调试”是整词，浏览器切分查询时（Intl.Segmenter）却切成单字，
+   * 结果这些词搜不到。查询里有会被切成单字的中文时，返回需要按原文补充匹配的片段。
+   */
+  function fragileRuns(query: string) {
+    return (query.match(CJK_RUN) ?? []).filter((run) => !segmenter || [...segmenter.segment(run)].some(({ segment }) => segment.length === 1));
+  }
+
+  /** 每段中文只留第一个字，借 Pagefind 的前缀匹配拿到候选页，再逐页核对原文里是否真有这些词。 */
+  async function substringMatches(engine: Pagefind, query: string, runs: string[]) {
+    const response = await engine.search(query.replace(CJK_RUN, (run) => ` ${run[0]} `));
+    const candidates = await Promise.all(response.results.slice(0, CANDIDATE_LIMIT).map((result) => result.data()));
+    const hits = (text: string) => runs.reduce((sum, run) => sum + text.split(run).length - 1, 0);
+    return candidates
+      .filter((page) => runs.every((run) => page.content.includes(run)))
+      .map((page) => ({ page, inTitle: runs.every((run) => (page.meta.title ?? '').includes(run)), count: hits(page.content) }))
+      .sort((a, b) => Number(b.inTitle) - Number(a.inTitle) || b.count - a.count)
+      .map(({ page }) => ({
+        ...page,
+        excerpt: excerptAround(page.content, runs[0]),
+        sub_results: page.sub_results.filter((sub) => runs.some((run) => `${sub.title}${stripTags(sub.excerpt)}`.includes(run))),
+      }));
+  }
+
   /** 返回 undefined 表示这次查询已被更新的输入取代。 */
   async function searchContent(query: string) {
     const engine = await loadPagefind();
     if (!engine) return [];
     const response = await engine.debouncedSearch(query, {}, 120);
     if (!response) return undefined;
-    const data = await Promise.all(response.results.slice(0, MAX_RESULTS).map((result) => result.data()));
+    let data = await Promise.all(response.results.slice(0, MAX_RESULTS).map((result) => result.data()));
+    const runs = fragileRuns(query);
+    if (runs.length) {
+      // 原文里确实出现查询词的页面排在前面，Pagefind 其余的结果接在后面。
+      const exact = await substringMatches(engine, query, runs);
+      const seen = new Set(exact.map((page) => page.url));
+      data = [...exact, ...data.filter((page) => !seen.has(page.url))];
+    }
     return data.flatMap(toEntries).slice(0, MAX_RESULTS);
   }
 
