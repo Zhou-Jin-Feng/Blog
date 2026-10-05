@@ -5,7 +5,9 @@ interface Props {
   headings: MarkdownHeading[];
 }
 
-const items = Astro.props.headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const sections = Astro.props.headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+// 长笔记的三级标题动辄上百个，全列出来目录比正文还难找，这时只列二级标题。
+const items = sections.length > 30 ? sections.filter((heading) => heading.depth === 2) : sections;
 ---
 
 {items.length >= 2 && (
@@ -38,6 +40,13 @@ const items = Astro.props.headings.filter((heading) => heading.depth === 2 || he
         if (key === id) link.setAttribute('aria-current', 'location');
         else link.removeAttribute('aria-current');
       });
+      const current = id ? links.get(id) : undefined;
+      // 目录比屏幕高时会出现滚动条，让当前章节留在可见范围内。
+      if (current && toc.scrollHeight > toc.clientHeight) {
+        const box = toc.getBoundingClientRect();
+        const item = current.getBoundingClientRect();
+        if (item.top < box.top || item.bottom > box.bottom) toc.scrollTop += item.top - box.top - box.height / 3;
+      }
     };
 
     observer = new IntersectionObserver(

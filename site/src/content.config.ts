@@ -14,6 +14,8 @@ const blog = defineCollection({
     updatedDate: z.coerce.date().optional(),
     tags: z.array(z.string().min(1)).min(1).max(5),
     draft: z.boolean().default(false),
+    /** 页面底部注明“AI 辅助润色”，下载的 Markdown 里也带上。 */
+    aiAssisted: z.boolean().default(false),
     template: z.boolean().default(true),
     cover: z.string().optional(),
   }),
@@ -43,6 +45,7 @@ const docs = defineCollection({
     version: z.string().min(1),
     updatedDate: z.coerce.date(),
     source: z.string().min(1),
+    aiAssisted: z.boolean().default(false),
     template: z.boolean().default(true),
   }),
 });

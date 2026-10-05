@@ -126,6 +126,7 @@ button { font: inherit; }
 .button:active { transform: scale(0.97); }
 .button.secondary { border-color: var(--line-strong); background: transparent; color: var(--ink); }
 .button.secondary:hover { border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.button.compact { min-height: 2.3rem; padding: 0.35rem 1rem; font-size: 0.88rem; }
 .text-link { padding: 0; border: 0; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1.5px no-repeat; color: var(--accent); font-weight: 700; text-decoration: none; cursor: pointer; transition: background-size 0.3s var(--ease-out), color 0.2s; }
 .text-link:hover { background-size: 100% 1.5px; color: var(--accent-hover); }
 
@@ -252,6 +253,11 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
 .post-summary { margin: 0; color: var(--muted); }
 .post-row .tag-list { margin-top: 0.7rem; }
 .post-length { color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
+.download-group + .download-group { margin-top: 3rem; }
+.download-group h2 { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 1rem; font-size: 1.3rem; }
+.group-count { color: var(--muted); font-size: 0.9rem; font-weight: 500; }
+.download-row { align-items: center; }
+.download-file { display: flex; align-items: center; gap: 0.9rem; margin: 0; color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
 .doc-source { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.85rem; }
 .version { font-variant-numeric: tabular-nums; }
 
@@ -281,10 +287,11 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
 .crumb a { color: var(--muted); text-decoration: none; }
 .crumb a:hover { color: var(--accent); }
 .detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.25rem; margin: 0; color: var(--muted); font-size: 0.9rem; }
+.detail-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 1.25rem 0 0; }
 .article-layout { display: grid; grid-template-columns: minmax(0, 44rem) minmax(0, 15rem); justify-content: space-between; gap: 3rem; }
 .article-layout:not(:has(.toc)) { grid-template-columns: minmax(0, 1fr); }
 
-.toc { position: sticky; top: calc(var(--header-h) + 2rem); align-self: start; font-size: 0.88rem; }
+.toc { position: sticky; top: calc(var(--header-h) + 2rem); align-self: start; max-height: calc(100vh - var(--header-h) - 4rem); overflow-y: auto; overscroll-behavior: contain; padding-left: 1px; font-size: 0.88rem; }
 .toc-title { margin-bottom: 0.6rem; color: var(--ink); font-weight: 700; }
 .toc ol { display: grid; gap: 0.1rem; list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--line); }
 .toc a { position: relative; display: block; margin-left: -1px; padding: 0.3rem 0 0.3rem 1rem; border-left: 2px solid transparent; color: var(--muted); line-height: 1.5; text-decoration: none; transition: color 0.2s, border-color 0.25s; }
@@ -307,6 +314,7 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
 .prose blockquote p:last-child { margin-bottom: 0; }
 .prose a { text-decoration-color: color-mix(in oklab, var(--accent) 40%, transparent); }
 .prose a:hover { text-decoration-color: currentColor; }
+.prose .ai-note { margin-top: 3rem; padding-top: 1rem; border-top: 1px dashed var(--line); color: var(--muted); font-size: 0.88rem; }
 .callout { border-radius: 14px; background: var(--surface); padding: 0.9rem 1.15rem; border: 1px solid var(--line); }
 .detail-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
 
@@ -405,7 +413,7 @@ html.theme-switching::view-transition-new(root) { animation: theme-reveal 0.6s c
 /* ---------- 响应式 ---------- */
 @media (max-width: 1080px) {
   .article-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .toc { position: static; order: -1; margin-bottom: 2rem; padding: 1rem 1.2rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+  .toc { position: static; order: -1; margin-bottom: 2rem; padding: 1rem 1.2rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); max-height: 50vh; }
 }
 
 @media (max-width: 1023px) {
@@ -451,4 +459,24 @@ html.theme-switching::view-transition-new(root) { animation: theme-reveal 0.6s c
   .graph text { transition: none !important; }
   .read-progress, .site-header { animation-duration: auto !important; }
   ::view-transition-old(root), ::view-transition-new(root) { animation: none !important; }
+}
+
+/* ---------- 打印 ---------- */
+/* 打印前脚本会切到浅色主题（代码高亮跟着 data-theme 走），这里再把站点配色固定为浅色兜底。 */
+@media print {
+  :root, :root[data-theme] { color-scheme: light; }
+  body { background: #fff; }
+  .site-header, .site-footer, .skip-link, .read-progress, .crumb, .detail-actions, .toc, .pager, .template-notice { display: none !important; }
+  .page-shell { padding: 0; }
+  .article-layout { display: block; }
+  .detail-header { margin-bottom: 1.5rem; }
+  .prose > * { max-width: none; }
+  .prose a { color: inherit; }
+  .expressive-code .copy { display: none !important; }
+  /* 纸上没有横向滚动条，长代码行改为自动换行（同 Expressive Code 的 wrap 选项）。 */
+  .expressive-code pre { overflow: visible !important; }
+  .expressive-code .ec-line .code { white-space: pre-wrap; overflow-wrap: break-word; }
+  .expressive-code .ec-line .code span.indent { white-space: pre; }
+  :is(h2, h3, h4) { break-after: avoid; }
+  img { break-inside: avoid; }
 }

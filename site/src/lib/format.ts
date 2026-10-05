@@ -13,3 +13,10 @@ export function readingMinutes(body = '') {
   const words = text.replace(/[㐀-鿿]/g, ' ').split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(cjk / 400 + words / 200));
 }
+
+/** 文件大小：不到 1 KB 显示字节数，否则保留一位小数。 */
+export function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}

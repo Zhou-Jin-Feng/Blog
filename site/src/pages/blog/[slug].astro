@@ -3,6 +3,7 @@ import { render, type CollectionEntry } from 'astro:content';
 import DetailLayout from '../../layouts/DetailLayout.astro';
 import { getPublishedPosts } from '../../lib/content';
 import { formatDate, readingMinutes } from '../../lib/format';
+import { fromPost } from '../../lib/markdown-export';
 
 type Props = { post: CollectionEntry<'blog'>; newer?: CollectionEntry<'blog'>; older?: CollectionEntry<'blog'> };
 
@@ -24,6 +25,8 @@ const { Content, headings } = await render(post);
   template={post.data.template}
   kind="post"
   date={post.data.publishDate}
+  download={fromPost(post)}
+  aiAssisted={post.data.aiAssisted}
 >
   <Fragment slot="meta">
     <p class="detail-meta">
