@@ -26,10 +26,12 @@ test.describe('Stage 2 P0 route baseline', () => {
 
   test('representative detail and download routes respond successfully', async ({ request }) => {
     const routes = [
-      '/blog/template-architecture/',
+      '/blog/python-debugging/',
+      '/blog/python-debugging.md',
       '/projects/documind/',
-      '/docs/template-content-model/',
-      '/downloads/project-report-template.md',
+      '/docs/llm-app-learning-roadmap/',
+      '/docs/llm-app-learning-roadmap.md',
+      '/images/blog/fastapi-notes/1781778460556.webp',
     ];
 
     for (const route of routes) {
