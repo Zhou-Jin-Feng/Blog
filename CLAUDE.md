@@ -1,6 +1,6 @@
 # 个人博客
 
-中文内容为主的个人博客，Astro 7 静态站，部署在 Cloudflare Pages。当前是**模板工程版**：站点骨架和流程已跑通并上线，内容还是模板占位，真实内容替换、脱敏和授权复核按用户决定后置。
+中文内容为主的个人博客，Astro 7 静态站，部署在 Cloudflare Pages。站点骨架和流程已上线，内容正在分批换成真实内容：项目、简历、履历、个人介绍、学习笔记和技术文档已替换，演示视频仍是模板占位。进度和每批的审查记录见 `docs/content-inventory.md`、`docs/privacy-review.md`。
 
 ## 目录约定
 
@@ -41,7 +41,11 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 | `timeline`（`src/content/timeline.yaml`） | `id` `order` `period` `type` `title` `description` `result` |
 | `resume`（`src/content/resume.yaml`） | `id` `order` `title`，`content`（一段话）和 `items`（条目列表）至少填一项 |
 
-每个 collection 都有 `template` 字段，默认 `true`，用来标记模板占位内容。换成真实内容时要显式设 `false`。
+每个 collection 都有 `template` 字段，默认 `true`，用来标记模板占位内容。换成真实内容时要显式设 `false`。各页面只在确实显示了模板条目时才出“模板内容”提示。
+
+`blog` 和 `docs` 还有 `aiAssisted`（默认 `false`）：设为 `true` 时，页面底部和下载的 Markdown 里都会注明“本文由作者整理，AI 辅助润色”。用户的学习笔记都是 AI 辅助整理的，发布时要设为 `true`。
+
+文章和文档页都能下载 Markdown 原文：`src/pages/blog/[slug].md.ts`、`src/pages/docs/[slug].md.ts` 在构建时生成 `/blog/<slug>.md`、`/docs/<slug>.md`，导出逻辑在 `src/lib/markdown-export.ts`；下载页自动列出全部文章和文档。`downloads` collection 只放另外提供的独立文件，可以为空。PDF 由访客用浏览器打印另存，打印样式在 `global.css` 末尾，打印前会临时切到浅色主题。文章配图放在 `public/images/blog/<文章 slug>/`，正文里用 `/images/...` 绝对路径引用，导出时会换成完整网址。
 
 读内容时优先用 `site/src/lib/content.ts`：`getPublishedPosts()` 取非草稿文章并按日期倒序，`collectContent()` 把五类 Markdown 内容整理成统一结构。内容类型的显示名称在 `site/src/lib/kinds.ts`。
 
@@ -69,6 +73,6 @@ cd site
 PLAYWRIGHT_PROXY=http://127.0.0.1:17890 npm run test:e2e
 ```
 
-PowerShell 下写成 `$env:PLAYWRIGHT_PROXY='http://127.0.0.1:17890'; npm run test:e2e`。本地预览只用 `127.0.0.1` 或 `localhost` 和白名单里的端口：测试用 4321，手动预览用 4399。
+PowerShell 下写成 `$env:PLAYWRIGHT_PROXY='http://127.0.0.1:17890'; npm run test:e2e`。本地服务只用 `127.0.0.1` 或 `localhost` 和白名单里的端口：e2e 测试用 4321；在 Claude 内置浏览器里手动预览用 9999（内置浏览器只放行这个端口）。起服务前先确认端口空闲，用完立即停掉。
 
 闸门按浏览器可执行文件的完整路径审计，即 `%LOCALAPPDATA%\ms-playwright\` 下的 `chromium-<版本>\chrome-win64\chrome.exe` 和 `chromium_headless_shell-<版本>\chrome-headless-shell-win64\chrome-headless-shell.exe`，不是整个目录放行。升级 `@playwright/test` 时如果浏览器版本变了，顺序是：退出相关会话和浏览器 → 升级 → 闸门发现新路径、部署规则并审计通过 → 从专线入口重启后再用。不要在旧会话里直接启动新浏览器"试试看"，也不要通过整目录放行、关闭防护或改用普通代理来解决。

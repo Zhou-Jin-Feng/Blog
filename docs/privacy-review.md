@@ -1,6 +1,6 @@
 # 公开内容与脱敏审查记录
 
-更新时间：2026-10-04
+更新时间：2026-10-05
 
 ## 当前审查范围
 
@@ -50,3 +50,4 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | [YYYY-MM-DD] | [待填写] | [PASS/命中项] | [PASS/问题] | [无/处理说明] | [PASS/BLOCKED] | Codex |
 | 2026-10-04 | project-01、project-02、个人介绍、resume-01 网页摘要、timeline-01~03（分支 `content/resume-and-projects`） | 扫描改动文件和构建产物中的手机号、真名、身份证号格式：新内容 0 命中；`docs/reports/lighthouse/*.json` 的命中均为带小数的耗时数值，不是手机号 | 简历原件含真名、证件照、手机号，PDF 元数据作者和标题含真名；网站内容只保留用户同意公开的信息 | 不写真名、不放照片、不写手机号；页脚 GitHub 改指个人主页（博客仓库私有，访客 404）；原件放 `private/` 并加入 `.gitignore`；用户确认两个项目均为本人独立完成；不提供简历 PDF，删除模板 PDF 和下载区 | PASS | Claude |
+| 2026-10-05 | blog-01~06、doc-01（分支 `content/notes-and-downloads`），来源为 `Documents\Typora笔记本` 下用户选定的 6 篇笔记和 `🔶学习阶段` 7 个文件 | 扫描密钥格式（`sk-`、`AKIA`、`ghp_`、`hf_` 等）和 `api_key=` 一类赋值：命中全部是 `your_api_key_here`、`sk-your-openai-key-here` 这类占位符；3 个 45 位字符串是小红书分享链接的 `xsec_token` 参数（只在未发布的 Hello-Agents 笔记里）；真名、手机号 0 命中；路径只有 `/home/user` 一类示例 | FastAPI 笔记的 49 张截图逐张查看：多数是本机开发截图（Swagger、PowerShell、PyCharm、Navicat），路径为 `D:\pythonpro`，无敏感信息；1 张是浏览器开发者工具截图，带课程网站 `python222.java1234.com` 的真实会话 Cookie（`JSESSIONID` 等）；1 张来源不明的示例照片；3 张（FastAPI 横幅、两张中间件原理图）用户确认为 AI 生成 | 删除带 Cookie 的截图，改为一句文字说明；删除来源不明的照片；课程网址换成 `example.com`，“课程简介 / 课程总结”改为“笔记范围 / 总结”；其余 47 张转为 WebP。Python 调试笔记删去引用不存在文件的附录；3 张 mermaid 流程图改为文字流程图；手写目录删除（页面自带目录）。Hello-Agents 笔记（Datawhale 教程，CC BY-NC-SA 4.0）不发布 | PASS | Claude |
