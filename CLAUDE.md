@@ -25,6 +25,8 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 需要 Node.js >= 22.12.0，本机、CI 和 Pages 统一用 Node 24。CI（`.github/workflows/ci.yml`）在 push 到 `main` 和 PR 上跑 `check` → `build` → `test:e2e`，改完代码本地至少过一遍这三步再说完成。
 
 - 搜索索引只在 `build` 时生成，`astro dev` 下搜索面板搜不到正文；调搜索要先 build，再 `npm run preview`。
+- Pagefind 建索引和浏览器端切分查询（`Intl.Segmenter`）用的分词不同，“镜像”“调试”这类词会被浏览器切成单字，直接搜搜不到。`SearchPalette.astro` 对这类查询按原文子串补充匹配，原文里出现查询词的页面排在前面；其余查询仍按 Pagefind 的排序。
+- 在 Claude 内置浏览器里测页内锚点跳转不可靠：面板在后台时不刷新画面，平滑滚动不会推进，看起来像“点了不跳”。以 Playwright 的结果为准。
 - 改了 Markdown 渲染相关的配置（如 `astro.config.mjs` 里的 Expressive Code）后，先删 `site/node_modules/.astro` 再 build，否则会沿用缓存里的旧渲染结果。
 
 ## 内容模型
