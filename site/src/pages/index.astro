@@ -10,6 +10,7 @@ import { getPublishedPosts } from '../lib/content';
 
 const posts = (await getPublishedPosts()).slice(0, 3);
 const projects = (await getCollection('projects', ({ data }) => data.featured)).slice(0, 2);
+const hasTemplate = [...posts, ...projects].some(({ data }) => data.template);
 ---
 
 <BaseLayout title="首页">
@@ -28,7 +29,7 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
   </section>
 
   <div class="container">
-    <TemplateNotice />
+    {hasTemplate && <TemplateNotice />}
     <section class="section" aria-labelledby="featured-projects">
       <div class="section-heading"><h2 id="featured-projects">精选项目</h2><a class="text-link" href="/projects/">全部项目</a></div>
       <div class="card-grid two-up">
@@ -46,9 +47,9 @@ const projects = (await getCollection('projects', ({ data }) => data.featured)).
     <section class="section" aria-labelledby="quick-links">
       <div class="section-heading"><h2 id="quick-links">快速入口</h2></div>
       <div class="card-grid quick-grid">
-        <article class="card quick-card"><h3><a href="/resume/">网页版简历</a></h3><p>查看结构化摘要和模板 PDF 下载入口。</p></article>
+        <article class="card quick-card"><h3><a href="/resume/">网页版简历</a></h3><p>求职意向、专业技能和项目经历摘要。</p></article>
         <article class="card quick-card"><h3><a href="/docs/">技术文档</a></h3><p>按版本和更新时间整理的文档目录。</p></article>
-        <article class="card quick-card"><h3><a href="/about/">关于与联系</a></h3><p>了解公开方向，并通过邮箱联系。</p></article>
+        <article class="card quick-card"><h3><a href="/about/">关于与联系</a></h3><p>了解技术方向，通过邮箱、微信或 GitHub 联系。</p></article>
       </div>
     </section>
   </div>

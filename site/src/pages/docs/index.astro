@@ -5,12 +5,13 @@ import TemplateNotice from '../../components/TemplateNotice.astro';
 import { formatDate } from '../../lib/format';
 
 const docs = (await getCollection('docs')).sort((a, b) => b.data.updatedDate.valueOf() - a.data.updatedDate.valueOf());
+const hasTemplate = docs.some(({ data }) => data.template);
 ---
 
 <BaseLayout title="文档" description="按版本和更新时间整理的技术文档。">
   <div class="container page-shell">
     <header class="page-header"><h1>文档</h1><p class="lede">为长期维护准备的结构化文档目录。</p></header>
-    <TemplateNotice />
+    {hasTemplate && <TemplateNotice />}
     <ul class="post-list">
       {docs.map((doc) => (
         <li class="post-row">

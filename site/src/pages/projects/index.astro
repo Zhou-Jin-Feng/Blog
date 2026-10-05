@@ -5,12 +5,13 @@ import TemplateNotice from '../../components/TemplateNotice.astro';
 import ProjectCard from '../../components/ProjectCard.astro';
 
 const projects = await getCollection('projects');
+const hasTemplate = projects.some(({ data }) => data.template);
 ---
 
 <BaseLayout title="项目" description="个人工程实践项目、技术栈和本人贡献。">
   <div class="container page-shell">
     <header class="page-header"><h1>项目</h1><p class="lede">关注问题背景、本人贡献、可验证成果和限制条件。</p></header>
-    <TemplateNotice />
+    {hasTemplate && <TemplateNotice />}
     <div class="card-grid two-up">
       {projects.map((project) => <ProjectCard project={project} showRole />)}
     </div>
