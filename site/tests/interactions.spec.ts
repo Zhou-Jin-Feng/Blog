@@ -123,6 +123,30 @@ test.describe('Interactive enhancements', () => {
     await expect(page).toHaveURL(/tag=Python/);
   });
 
+  test('search finds Chinese words the browser splits into single characters', async ({ page }) => {
+    // Pagefind 用 Intl.Segmenter 切分查询，会把“镜像”“调试”切成单字，和索引里的整词对不上，
+    // 搜索面板会按原文补充匹配。
+    await page.goto('/');
+    await page.keyboard.press('Control+k');
+    const input = page.locator('[data-palette-input]');
+    const first = page.locator('[data-palette] [role="option"]').first();
+    for (const [term, title] of [['镜像', 'Docker 完全学习指南'], ['端口', 'Docker 完全学习指南'], ['调试', 'Python 调试技巧']]) {
+      await input.fill(term);
+      await expect(first).toContainText(title);
+      await expect(first.locator('mark').first()).toHaveText(term);
+    }
+  });
+
+  test('table of contents links jump to Chinese headings', async ({ page }) => {
+    await page.goto('/docs/llm-app-learning-roadmap/');
+    await page.locator('[data-toc] a', { hasText: 'stage4' }).click();
+    await expect(page).toHaveURL(/#stage4/);
+    const heading = page.locator('.prose h2', { hasText: 'stage4：LangGraph 智能体工程' });
+    // 页面开了平滑滚动，等滚动停在顶栏下方。
+    await expect.poll(() => heading.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBeLessThan(200);
+    expect(await heading.evaluate((el) => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(0);
+  });
+
   test('long notes list only second-level headings and credit AI assistance', async ({ page }) => {
     await page.goto('/blog/langchain-langgraph-langsmith/');
     const toc = page.locator('[data-toc]');
