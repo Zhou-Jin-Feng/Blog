@@ -5,12 +5,13 @@ import TemplateNotice from '../../components/TemplateNotice.astro';
 
 const [videos, projects] = await Promise.all([getCollection('videos'), getCollection('projects')]);
 const projectTitle = new Map(projects.map((project) => [project.id, project.data.title]));
+const hasTemplate = videos.some(({ data }) => data.template);
 ---
 
 <BaseLayout title="视频" description="项目演示视频和文字摘要。">
   <div class="container page-shell" data-pagefind-body data-pagefind-meta="type:视频">
     <header class="page-header" data-pagefind-meta="listing:true"><h1>视频</h1><p class="lede">每个视频都提供关联项目、摘要和直接访问链接。</p></header>
-    <TemplateNotice />
+    {hasTemplate && <TemplateNotice />}
     <div class="card-grid two-up">
       {videos.map((video) => (
         <article class="card media-card">

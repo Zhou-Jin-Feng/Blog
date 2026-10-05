@@ -5,6 +5,7 @@ import TemplateNotice from '../components/TemplateNotice.astro';
 import Toc from '../components/Toc.astro';
 import { formatDate } from '../lib/format';
 import { kindMeta, type ContentKind } from '../lib/kinds';
+import { AI_NOTE, type Downloadable } from '../lib/markdown-export';
 
 interface Props {
   title: string;
@@ -18,9 +19,12 @@ interface Props {
   /** 写进搜索索引，搜索面板据此显示类型和日期。 */
   kind: ContentKind;
   date?: Date;
+  /** 有值时在标题下显示“下载 Markdown”和“打印 / 存为 PDF”。 */
+  download?: Downloadable;
+  aiAssisted?: boolean;
 }
 
-const { title, description, crumb, transitionName, headings, template, kind, date } = Astro.props;
+const { title, description, crumb, transitionName, headings, template, kind, date, download, aiAssisted = false } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description}>
@@ -33,11 +37,18 @@ const { title, description, crumb, transitionName, headings, template, kind, dat
         <h1 transition:name={transitionName}>{title}</h1>
         <p class="lede">{description}</p>
         <slot name="meta" />
+        {download && (
+          <p class="detail-actions" data-pagefind-ignore>
+            <a class="button secondary compact" href={download.file} download={download.fileName}>下载 Markdown</a>
+            <button class="button secondary compact" type="button" data-print>打印 / 存为 PDF</button>
+          </p>
+        )}
       </header>
       <div class="article-layout">
         <div class="prose">
           {template && <TemplateNotice />}
           <slot />
+          {aiAssisted && <p class="ai-note" data-pagefind-ignore>{AI_NOTE}</p>}
         </div>
         <Toc headings={headings} />
       </div>
@@ -45,3 +56,19 @@ const { title, description, crumb, transitionName, headings, template, kind, dat
     </article>
   </div>
 </BaseLayout>
+
+<script>
+  // 打印前临时切到浅色主题：深色主题的浅色文字和代码高亮印到白纸上看不清。
+  let themeBeforePrint: string | undefined;
+  addEventListener('beforeprint', () => {
+    themeBeforePrint = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = 'light';
+  });
+  addEventListener('afterprint', () => {
+    if (themeBeforePrint) document.documentElement.dataset.theme = themeBeforePrint;
+    themeBeforePrint = undefined;
+  });
+  document.addEventListener('click', (event) => {
+    if ((event.target as Element).closest('[data-print]')) print();
+  });
+</script>

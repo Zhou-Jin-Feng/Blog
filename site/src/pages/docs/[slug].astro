@@ -2,6 +2,7 @@
 import { getCollection, render, type CollectionEntry } from 'astro:content';
 import DetailLayout from '../../layouts/DetailLayout.astro';
 import { formatDate } from '../../lib/format';
+import { fromDoc } from '../../lib/markdown-export';
 
 type Props = { doc: CollectionEntry<'docs'> };
 
@@ -23,6 +24,8 @@ const { Content, headings } = await render(doc);
   template={doc.data.template}
   kind="doc"
   date={doc.data.updatedDate}
+  download={fromDoc(doc)}
+  aiAssisted={doc.data.aiAssisted}
 >
   <p class="detail-meta" slot="meta">
     <span class="version">{doc.data.version}</span>

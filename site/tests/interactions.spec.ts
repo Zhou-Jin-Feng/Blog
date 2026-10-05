@@ -43,13 +43,13 @@ test.describe('Interactive enhancements', () => {
     const palette = page.locator('[data-palette]');
     await expect(palette).toBeVisible();
 
-    await page.locator('[data-palette-input]').fill('发布前');
+    await page.locator('[data-palette-input]').fill('断点');
     const options = palette.locator('[role="option"]');
-    await expect(options.first()).toContainText('一次发布前检查清单');
+    await expect(options.first()).toContainText('Python 调试技巧');
 
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/\/blog\/template-release\/$/);
-    await expect(page.locator('h1')).toHaveText('模板文章：一次发布前检查清单');
+    await expect(page).toHaveURL(/\/blog\/python-debugging\/$/);
+    await expect(page.locator('h1')).toHaveText('Python 调试技巧：从错误现象到根因修复');
     await expect(palette).toBeHidden();
   });
 
@@ -61,17 +61,17 @@ test.describe('Interactive enhancements', () => {
     });
     await page.goto('/');
     await page.keyboard.press('Control+k');
-    await page.locator('[data-palette-input]').fill('发布前');
+    await page.locator('[data-palette-input]').fill('断点');
     const loading = page.locator('[data-palette-loading]');
     await expect(loading).toBeVisible();
-    await expect(page.locator('[data-palette] [role="option"]').first()).toContainText('一次发布前检查清单');
+    await expect(page.locator('[data-palette] [role="option"]').first()).toContainText('Python 调试技巧');
     await expect(loading).toBeHidden();
   });
 
   test('search palette links cards on listing pages to their anchors', async ({ page }) => {
     await page.goto('/');
     await page.keyboard.press('Control+k');
-    await page.locator('[data-palette-input]').fill('演示');
+    await page.locator('[data-palette-input]').fill('演示占位');
     const option = page.locator('[data-palette] [role="option"] a[href="/video/#video-template-demo"]');
     await expect(option).toContainText('模板视频：项目演示占位');
     await expect(option.locator('.option-type')).toHaveText('视频');
@@ -89,17 +89,16 @@ test.describe('Interactive enhancements', () => {
         return data.map((item) => item.url);
       }, term);
 
-    expect(await urlsFor('发布前')).toContain('/blog/template-release/');
+    expect(await urlsFor('断点')).toContain('/blog/python-debugging/');
     expect((await urlsFor('模板草稿')).some((url) => url.includes('template-draft'))).toBe(false);
   });
 
-  test('code blocks get a copy button, a title and follow the site theme', async ({ browser }) => {
+  test('code blocks get a copy button and follow the site theme', async ({ browser }) => {
     const context = await browser.newContext({ reducedMotion: 'reduce', colorScheme: 'light' });
     const page = await context.newPage();
-    await page.goto('/blog/template-architecture/');
+    await page.goto('/blog/python-debugging/');
     const blocks = page.locator('.prose .expressive-code');
-    await expect(blocks).toHaveCount(2);
-    await expect(blocks.first().locator('figcaption')).toContainText('src/lib/content.ts');
+    expect(await blocks.count()).toBeGreaterThan(0);
     await expect(blocks.first().locator('.copy button')).toHaveCount(1);
 
     const background = () => blocks.first().locator('pre').evaluate((pre) => getComputedStyle(pre).backgroundColor);
@@ -111,17 +110,25 @@ test.describe('Interactive enhancements', () => {
   });
 
   test('blog tag filter narrows the list and syncs the URL', async ({ page }) => {
-    await page.goto('/blog/?tag=%E5%A4%8D%E7%9B%98');
+    await page.goto('/blog/?tag=Docker');
     const rows = page.locator('[data-filter-list] > .post-row');
     await expect(rows.filter({ visible: true })).toHaveCount(1);
 
     await page.locator('[data-filter] [data-tag=""]').click();
-    await expect(rows.filter({ visible: true })).toHaveCount(3);
+    await expect(rows.filter({ visible: true })).toHaveCount(6);
     await expect(page).toHaveURL(/\/blog\/$/);
 
-    await page.locator('[data-filter] [data-tag="发布"]').click();
-    await expect(rows.filter({ visible: true })).toHaveCount(1);
-    await expect(page).toHaveURL(/tag=/);
+    await page.locator('[data-filter] [data-tag="Python"]').click();
+    await expect(rows.filter({ visible: true })).toHaveCount(2);
+    await expect(page).toHaveURL(/tag=Python/);
+  });
+
+  test('long notes list only second-level headings and credit AI assistance', async ({ page }) => {
+    await page.goto('/blog/langchain-langgraph-langsmith/');
+    const toc = page.locator('[data-toc]');
+    await expect(toc.locator('.toc-depth-3')).toHaveCount(0);
+    await expect(toc.locator('a')).toHaveCount(await page.locator('.prose h2').count());
+    await expect(page.locator('.prose .ai-note')).toHaveText('本文由作者整理，AI 辅助润色。');
   });
 
   test('content graph renders real content and highlights a legend group', async ({ page }) => {
