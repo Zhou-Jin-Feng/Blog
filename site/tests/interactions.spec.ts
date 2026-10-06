@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { features } from '../src/data/site';
 
 async function openNavIfCollapsed(page: Page) {
   const toggle = page.locator('[data-nav-toggle]');
@@ -69,6 +70,8 @@ test.describe('Interactive enhancements', () => {
   });
 
   test('search palette links cards on listing pages to their anchors', async ({ page }) => {
+    // 目前只有视频卡片会作为列表页的子结果出现，下载页的“其他资料”是空的。
+    test.skip(!features.videos, '视频栏目隐藏时没有带锚点的卡片可测');
     await page.goto('/');
     await page.keyboard.press('Control+k');
     await page.locator('[data-palette-input]').fill('演示占位');

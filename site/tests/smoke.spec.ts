@@ -1,15 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { features } from '../src/data/site';
+
+/** 导航里的栏目。视频栏目按 features.videos 开关显示。 */
+const sections = ['/', '/blog/', '/projects/', '/docs/', ...(features.videos ? ['/video/'] : []), '/downloads/', '/resume/', '/timeline/', '/about/'];
 
 const p0Routes = [
-  '/',
-  '/blog/',
-  '/projects/',
-  '/docs/',
-  '/video/',
-  '/downloads/',
-  '/resume/',
-  '/timeline/',
-  '/about/',
+  ...sections,
   '/404.html',
   '/rss.xml',
   '/sitemap-index.xml',
@@ -66,15 +62,26 @@ test.describe('Stage 2 P0 route baseline', () => {
 
     await page.goto('/');
     const navigation = page.locator('nav[aria-label="主导航"]');
-    await expect(navigation.locator('a')).toHaveCount(9);
+    await expect(navigation.locator('a')).toHaveCount(sections.length);
 
     const hrefs = await navigation.locator('a').evaluateAll((links) =>
       links.map((link) => link.getAttribute('href')),
     );
-    for (const route of ['/', '/blog/', '/projects/', '/docs/', '/video/', '/downloads/', '/resume/', '/timeline/', '/about/']) {
+    for (const route of sections) {
       expect(hrefs).toContain(route);
     }
 
     expect(browserErrors).toEqual([]);
+  });
+
+  test('the video section stays out of sight while its switch is off', async ({ page, request }) => {
+    test.skip(features.videos, '视频栏目已开启');
+    expect((await request.get('/video/')).status()).toBe(404);
+    expect(await (await request.get('/sitemap-0.xml')).text()).not.toContain('/video/');
+
+    await page.goto('/');
+    await expect(page.locator('nav[aria-label="主导航"] a[href="/video/"]')).toHaveCount(0);
+    await expect(page.locator('[data-graph] .node[data-kind="item"]')).not.toHaveCount(0);
+    await expect(page.locator('[data-graph] [data-legend="video"]')).toHaveCount(0);
   });
 });
