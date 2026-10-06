@@ -1,9 +1,11 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
+import RelatedContent from '../../components/RelatedContent.astro';
 import DetailLayout from '../../layouts/DetailLayout.astro';
-import { getPublishedPosts } from '../../lib/content';
+import { collectContent, getPublishedPosts } from '../../lib/content';
 import { formatDate, readingMinutes } from '../../lib/format';
 import { fromPost } from '../../lib/markdown-export';
+import { relatedTo } from '../../lib/related';
 
 type Props = { post: CollectionEntry<'blog'>; newer?: CollectionEntry<'blog'>; older?: CollectionEntry<'blog'> };
 
@@ -14,6 +16,7 @@ export async function getStaticPaths() {
 
 const { post, newer, older } = Astro.props as Props;
 const { Content, headings } = await render(post);
+const related = relatedTo(`post:${post.id}`, await collectContent());
 ---
 
 <DetailLayout
@@ -37,6 +40,7 @@ const { Content, headings } = await render(post);
     <ul class="tag-list" aria-label="文章标签">{post.data.tags.map((tag) => <li><a class="tag" href={`/blog/?tag=${encodeURIComponent(tag)}`}>{tag}</a></li>)}</ul>
   </Fragment>
   <Content />
+  <RelatedContent items={related} slot="after" />
   {(newer || older) && (
     <nav class="pager" aria-label="相邻文章" slot="after" data-pagefind-ignore>
       {older ? <a class="pager-link" href={`/blog/${older.id}/`}><span class="pager-label">较早一篇</span><span class="pager-title">{older.data.title}</span></a> : <span />}

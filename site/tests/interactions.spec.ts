@@ -150,6 +150,26 @@ test.describe('Interactive enhancements', () => {
     expect(await heading.evaluate((el) => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(0);
   });
 
+  test('detail pages suggest related content by shared tags', async ({ page }) => {
+    await page.goto('/blog/fastapi-notes/');
+    const related = page.locator('.related');
+    await expect(related).toHaveAttribute('data-pagefind-ignore', '');
+    const links = related.locator('a');
+    // 共同标签多的在前：两个项目都用了 FastAPI 和 Python，调试笔记只共有 Python。
+    await expect(links).toHaveCount(3);
+    await expect(links.nth(0)).toContainText('DocuMind');
+    await expect(links.nth(0)).toContainText('共同标签：Python、FastAPI');
+    await expect(links.nth(2)).toContainText('Python 调试技巧');
+
+    // 项目页反过来推荐文章；少见的共同标签（LangChain）排在常见的（Python）前面。
+    await page.goto('/projects/documind/');
+    await expect(page.locator('.related a')).toContainText(['ScholarTrace', 'FastAPI 学习笔记', 'LangChain + LangGraph + LangSmith 学习笔记']);
+
+    // 没有共同标签就不显示，不拿无关内容凑数。
+    await page.goto('/docs/llm-app-learning-roadmap/');
+    await expect(page.locator('.related')).toHaveCount(0);
+  });
+
   test('long notes list only second-level headings and credit AI assistance', async ({ page }) => {
     await page.goto('/blog/langchain-langgraph-langsmith/');
     const toc = page.locator('[data-toc]');
