@@ -8,7 +8,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // 本地默认是 CPU 线程数的一半（本机 10 个），偶发超时。实测 4 到 10 个进程总耗时只差一两秒，
+  // 瓶颈在最长的单个用例，所以取 4 个：几乎一样快，CPU 争用最小。
+  workers: process.env.CI ? 1 : 4,
   reporter: 'html',
   use: {
     baseURL: 'http://127.0.0.1:4321',
