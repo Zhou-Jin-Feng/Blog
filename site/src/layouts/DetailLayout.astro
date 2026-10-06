@@ -6,6 +6,7 @@ import Toc from '../components/Toc.astro';
 import { formatDate } from '../lib/format';
 import { kindMeta, type ContentKind } from '../lib/kinds';
 import { AI_NOTE, type Downloadable } from '../lib/markdown-export';
+import type { ArticleMeta } from '../lib/og';
 
 interface Props {
   title: string;
@@ -22,12 +23,15 @@ interface Props {
   /** 有值时在标题下显示“下载 Markdown”和“打印 / 存为 PDF”。 */
   download?: Downloadable;
   aiAssisted?: boolean;
+  /** 分享图路径（见 lib/og.ts 的 ogImagePath）和 article:* 信息。 */
+  image: string;
+  article: ArticleMeta;
 }
 
-const { title, description, crumb, transitionName, headings, template, kind, date, download, aiAssisted = false } = Astro.props;
+const { title, description, crumb, transitionName, headings, template, kind, date, download, aiAssisted = false, image, article } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} image={image} article={article}>
   <div class="read-progress" aria-hidden="true"></div>
   <div class="container page-shell">
     {/* Pagefind 一个属性只认一组 key:value，类型和日期分开挂。 */}

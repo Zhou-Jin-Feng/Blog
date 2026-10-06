@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { features } from '../src/data/site';
 
 const baseURL = 'http://127.0.0.1:4321';
-const routes = ['/', '/blog/', '/projects/', '/docs/', '/video/', '/downloads/', '/resume/', '/timeline/', '/about/'];
+const routes = ['/', '/blog/', '/projects/', '/docs/', ...(features.videos ? ['/video/'] : []), '/downloads/', '/resume/', '/timeline/', '/about/'];
 const viewports = [
   { width: 360, height: 800 },
   { width: 768, height: 1024 },

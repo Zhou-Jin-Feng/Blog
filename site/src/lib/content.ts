@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { features } from '../data/site';
 import type { ContentKind } from './kinds';
 
 /** 未标记草稿的博客文章，按发布日期从新到旧。 */
@@ -21,13 +22,13 @@ export interface ContentItem {
   relatedKey?: string;
 }
 
-/** 把五类内容整理成同一种结构，按 kindMeta 的类型顺序排列。 */
+/** 把五类内容整理成同一种结构，按 kindMeta 的类型顺序排列。视频栏目隐藏时不含视频。 */
 export async function collectContent(): Promise<ContentItem[]> {
   const [posts, projects, docs, videos, downloads] = await Promise.all([
     getPublishedPosts(),
     getCollection('projects'),
     getCollection('docs'),
-    getCollection('videos'),
+    features.videos ? getCollection('videos') : [],
     getCollection('downloads'),
   ]);
 

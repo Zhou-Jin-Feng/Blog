@@ -1,6 +1,10 @@
 ---
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import RelatedContent from '../../components/RelatedContent.astro';
 import DetailLayout from '../../layouts/DetailLayout.astro';
+import { collectContent } from '../../lib/content';
+import { ogImagePath } from '../../lib/og';
+import { relatedTo } from '../../lib/related';
 
 type Props = { project: CollectionEntry<'projects'> };
 
@@ -11,6 +15,7 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props as Props;
 const { Content, headings } = await render(project);
+const related = relatedTo(`project:${project.id}`, await collectContent());
 ---
 
 <DetailLayout
@@ -21,6 +26,8 @@ const { Content, headings } = await render(project);
   headings={headings}
   template={project.data.template}
   kind="project"
+  image={ogImagePath('project', project.id)}
+  article={{ tags: project.data.techStack }}
 >
   <Fragment slot="meta">
     <p class="detail-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span></p>
@@ -34,4 +41,5 @@ const { Content, headings } = await render(project);
     {project.data.videoUrl && <a class="button secondary" href={project.data.videoUrl}>演示视频</a>}
     <a class="button" href="/projects/">返回项目列表</a>
   </nav>
+  <RelatedContent items={related} slot="after" />
 </DetailLayout>

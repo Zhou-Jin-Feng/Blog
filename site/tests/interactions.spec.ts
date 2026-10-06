@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { features } from '../src/data/site';
 
 async function openNavIfCollapsed(page: Page) {
   const toggle = page.locator('[data-nav-toggle]');
@@ -69,6 +70,8 @@ test.describe('Interactive enhancements', () => {
   });
 
   test('search palette links cards on listing pages to their anchors', async ({ page }) => {
+    // 目前只有视频卡片会作为列表页的子结果出现，下载页的“其他资料”是空的。
+    test.skip(!features.videos, '视频栏目隐藏时没有带锚点的卡片可测');
     await page.goto('/');
     await page.keyboard.press('Control+k');
     await page.locator('[data-palette-input]').fill('演示占位');
@@ -145,6 +148,26 @@ test.describe('Interactive enhancements', () => {
     // 页面开了平滑滚动，等滚动停在顶栏下方。
     await expect.poll(() => heading.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBeLessThan(200);
     expect(await heading.evaluate((el) => el.getBoundingClientRect().top)).toBeGreaterThanOrEqual(0);
+  });
+
+  test('detail pages suggest related content by shared tags', async ({ page }) => {
+    await page.goto('/blog/fastapi-notes/');
+    const related = page.locator('.related');
+    await expect(related).toHaveAttribute('data-pagefind-ignore', '');
+    const links = related.locator('a');
+    // 共同标签多的在前：两个项目都用了 FastAPI 和 Python，调试笔记只共有 Python。
+    await expect(links).toHaveCount(3);
+    await expect(links.nth(0)).toContainText('DocuMind');
+    await expect(links.nth(0)).toContainText('共同标签：Python、FastAPI');
+    await expect(links.nth(2)).toContainText('Python 调试技巧');
+
+    // 项目页反过来推荐文章；少见的共同标签（LangChain）排在常见的（Python）前面。
+    await page.goto('/projects/documind/');
+    await expect(page.locator('.related a')).toContainText(['ScholarTrace', 'FastAPI 学习笔记', 'LangChain + LangGraph + LangSmith 学习笔记']);
+
+    // 没有共同标签就不显示，不拿无关内容凑数。
+    await page.goto('/docs/llm-app-learning-roadmap/');
+    await expect(page.locator('.related')).toHaveCount(0);
   });
 
   test('long notes list only second-level headings and credit AI assistance', async ({ page }) => {

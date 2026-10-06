@@ -1,0 +1,27 @@
+---
+import { kindMeta } from '../lib/kinds';
+import type { RelatedItem } from '../lib/related';
+
+interface Props {
+  items: RelatedItem[];
+}
+
+const { items } = Astro.props;
+---
+
+{items.length > 0 && (
+  <section class="related" aria-labelledby="related-title" data-pagefind-ignore>
+    <h2 id="related-title">相关内容</h2>
+    <ul class="related-list">
+      {items.map((item) => (
+        <li>
+          <a class="related-link" href={item.href}>
+            <span class="option-type" data-type={kindMeta[item.kind].label}>{kindMeta[item.kind].label}</span>
+            <span class="related-title">{item.title}</span>
+            <span class="related-why">共同标签：{item.shared.join('、')}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+)}

@@ -2,6 +2,12 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import TemplateNotice from '../../components/TemplateNotice.astro';
+import { features } from '../../data/site';
+
+// 用剩余参数路由是为了能按开关决定生成与否：page 为 undefined 时对应 /video/ 本身；栏目隐藏时不生成，访问返回 404。
+export function getStaticPaths() {
+  return features.videos ? [{ params: { page: undefined } }] : [];
+}
 
 const [videos, projects] = await Promise.all([getCollection('videos'), getCollection('projects')]);
 const projectTitle = new Map(projects.map((project) => [project.id, project.data.title]));

@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
+    "og:fonts": "node scripts/og-fonts.mjs",
     "astro": "astro"
   },
   "dependencies": {
@@ -21,7 +22,9 @@
     "astro": "^7.3.5",
     "astro-expressive-code": "^0.44.2",
     "d3-force": "^3.0.0",
-    "pagefind": "^1.5.2"
+    "pagefind": "^1.5.2",
+    "satori": "^0.35.0",
+    "sharp": "^0.35.5"
   },
   "allowScripts": {
     "esbuild": true
@@ -30,6 +33,12 @@
     "@astrojs/check": "^0.9.10",
     "@playwright/test": "^1.62.1",
     "@types/d3-force": "^3.0.10",
+    "subset-font": "^2.9.0",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "satori": {
+      "fflate": "0.7.5"
+    }
   }
 }

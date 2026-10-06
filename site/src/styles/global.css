@@ -318,7 +318,16 @@ a.tag:hover { background: var(--accent-soft); color: var(--accent); }
 .callout { border-radius: 14px; background: var(--surface); padding: 0.9rem 1.15rem; border: 1px solid var(--line); }
 .detail-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
 
+.related { max-width: 44rem; margin-top: 3.5rem; }
+.related h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+.related-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 1rem; list-style: none; margin: 0; padding: 0; }
+.related-link { display: grid; align-content: start; justify-items: start; gap: 0.5rem; height: 100%; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 1rem 1.2rem; color: var(--ink); text-decoration: none; transition: border-color 0.2s, transform 0.3s var(--ease-out); }
+.related-link:hover { border-color: var(--accent); color: var(--ink); transform: translateY(-2px); }
+.related-title { font-weight: 700; line-height: 1.5; }
+.related-why { color: var(--muted); font-size: 0.8rem; }
+
 .pager { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; max-width: 44rem; margin-top: 3.5rem; }
+.related + .pager { margin-top: 2rem; }
 .pager-link { display: grid; gap: 0.25rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); padding: 1rem 1.2rem; color: var(--ink); text-decoration: none; transition: border-color 0.2s, transform 0.3s var(--ease-out); }
 .pager-link:hover { border-color: var(--accent); color: var(--ink); transform: translateY(-2px); }
 .pager-link.is-next { grid-column: 2; text-align: right; }
@@ -453,7 +462,7 @@ html.theme-switching::view-transition-new(root) { animation: theme-reveal 0.6s c
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
-  .card:hover, .card:focus-within, .pager-link:hover { transform: none; }
+  .card:hover, .card:focus-within, .pager-link:hover, .related-link:hover { transform: none; }
   .graph .node, .graph .link, .timeline::after, .timeline-item::before { animation: none !important; }
   /* 星图标签按计算样式栅格化，不能让上面的全局过渡把切换主题后的颜色拖后一两帧。 */
   .graph text { transition: none !important; }
@@ -466,7 +475,7 @@ html.theme-switching::view-transition-new(root) { animation: theme-reveal 0.6s c
 @media print {
   :root, :root[data-theme] { color-scheme: light; }
   body { background: #fff; }
-  .site-header, .site-footer, .skip-link, .read-progress, .crumb, .detail-actions, .toc, .pager, .template-notice { display: none !important; }
+  .site-header, .site-footer, .skip-link, .read-progress, .crumb, .detail-actions, .toc, .related, .pager, .template-notice { display: none !important; }
   .page-shell { padding: 0; }
   .article-layout { display: block; }
   .detail-header { margin-bottom: 1.5rem; }
