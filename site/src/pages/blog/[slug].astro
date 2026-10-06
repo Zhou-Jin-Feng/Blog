@@ -5,6 +5,7 @@ import DetailLayout from '../../layouts/DetailLayout.astro';
 import { collectContent, getPublishedPosts } from '../../lib/content';
 import { formatDate, readingMinutes } from '../../lib/format';
 import { fromPost } from '../../lib/markdown-export';
+import { ogImagePath } from '../../lib/og';
 import { relatedTo } from '../../lib/related';
 
 type Props = { post: CollectionEntry<'blog'>; newer?: CollectionEntry<'blog'>; older?: CollectionEntry<'blog'> };
@@ -30,6 +31,8 @@ const related = relatedTo(`post:${post.id}`, await collectContent());
   date={post.data.publishDate}
   download={fromPost(post)}
   aiAssisted={post.data.aiAssisted}
+  image={ogImagePath('post', post.id)}
+  article={{ published: post.data.publishDate, modified: post.data.updatedDate, tags: post.data.tags }}
 >
   <Fragment slot="meta">
     <p class="detail-meta">

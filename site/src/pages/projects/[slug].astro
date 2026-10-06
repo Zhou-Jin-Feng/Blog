@@ -3,6 +3,7 @@ import { getCollection, render, type CollectionEntry } from 'astro:content';
 import RelatedContent from '../../components/RelatedContent.astro';
 import DetailLayout from '../../layouts/DetailLayout.astro';
 import { collectContent } from '../../lib/content';
+import { ogImagePath } from '../../lib/og';
 import { relatedTo } from '../../lib/related';
 
 type Props = { project: CollectionEntry<'projects'> };
@@ -25,6 +26,8 @@ const related = relatedTo(`project:${project.id}`, await collectContent());
   headings={headings}
   template={project.data.template}
   kind="project"
+  image={ogImagePath('project', project.id)}
+  article={{ tags: project.data.techStack }}
 >
   <Fragment slot="meta">
     <p class="detail-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span></p>
