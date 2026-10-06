@@ -29,6 +29,7 @@ npm run og:fonts   # 重新生成分享图字体子集，构建报“分享图�
 - Pagefind 建索引和浏览器端切分查询（`Intl.Segmenter`）用的分词不同，“镜像”“调试”这类词会被浏览器切成单字，直接搜搜不到。`SearchPalette.astro` 对这类查询按原文子串补充匹配，原文里出现查询词的页面排在前面；其余查询仍按 Pagefind 的排序。
 - 在 Claude 内置浏览器里测页内锚点跳转不可靠：面板在后台时不刷新画面，平滑滚动不会推进，看起来像“点了不跳”。以 Playwright 的结果为准。
 - 改了 Markdown 渲染相关的配置（如 `astro.config.mjs` 里的 Expressive Code）后，先删 `site/node_modules/.astro` 再 build，否则会沿用缓存里的旧渲染结果。
+- `.gitattributes` 把 Markdown 固定为 LF 换行检出。否则 Windows 上会按 CRLF 检出，本地构建的 Markdown 下载会带上 CRLF，和线上（Linux 构建）不一致。改了换行规则后，要把相关文件重新检出才会生效；管道传文件路径时用 `git ls-files -z` 配 `xargs -0`，`docs/` 里有中文文件名。
 - `package.json` 的 `overrides` 有两条，都是上游还没跟进、为消除 `npm audit` 告警加的：satori 锁定的 `fflate` 从 0.7.3 升到修复版 0.7.5；Expressive Code 依赖的 `postcss-nested` 从 6 换成 7，以用上修复版 `postcss-selector-parser` 7.1.6，换后构建产物逐字节不变。升级 satori 或 astro-expressive-code 时，看上游是否已经用上修复版，是的话删掉对应的一条。
 
 ## 内容模型
