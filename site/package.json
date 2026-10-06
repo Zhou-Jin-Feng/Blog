@@ -39,6 +39,9 @@
   "overrides": {
     "satori": {
       "fflate": "0.7.5"
+    },
+    "@expressive-code/core": {
+      "postcss-nested": "^7.0.2"
     }
   }
 }
