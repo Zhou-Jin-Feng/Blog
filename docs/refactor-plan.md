@@ -1,7 +1,7 @@
 # 重构方案：哪些用轮子，哪些自己做
 
-更新时间：2026-10-05
-状态：方案已确认（2026-10-03）；阶段 1、2 及收尾项已合并上线（PR #1、#2、#3）；阶段 3 的星图已上线（PR #6），相关文章和分享图待做；真实内容分批替换中（第一批 PR #5 已上线）
+更新时间：2026-10-06
+状态：方案已确认（2026-10-03）；阶段 1、2 及收尾项已合并上线（PR #1、#2、#3）；阶段 3 的星图已上线（PR #6），相关内容和分享图已完成（分支 `feat/related-og-hide-video`，待合并）；真实内容分批替换中（第一批 PR #5 已上线）
 评估基线：`main` @ `3d04865`
 
 ## 1. 背景
@@ -31,7 +31,7 @@
 | RSS、Sitemap、MDX | 官方集成 | — | 保留 |
 | robots.txt | 手写端点 | 8 行 | 保留 |
 | 简历、履历数据 | 写在 `src/data/site.ts` 里 | — | 改成 content collection |
-| OG 分享图 | 没有；全站 `og:type` 都是 `website` | — | 引入 astro-og-canvas |
+| OG 分享图 | 没有；全站 `og:type` 都是 `website` | — | 构建期生成（原定 astro-og-canvas，实施时改用 satori，见 4.4） |
 | 访问统计 | 没有 | — | Cloudflare Web Analytics |
 | 相关文章 | 没有 | — | 自己写 |
 
@@ -57,6 +57,7 @@ Astro 7 还要求 Node.js >= 22.12.0。CI 和 Pages 目前用 Node 22。
 | `astro-expressive-code` | 0.44.2 | peer 依赖 `astro ^7`。0.43 起检测到 Sätteri 时自动改用 Sätteri 插件，0.44 起正式支持 Astro 7 |
 | `astro-og-canvas` | 0.13.2 | peer 依赖 `astro ^5 \|\| ^6 \|\| ^7` |
 | `astro-pagefind` | 2.0.1 | peer 依赖包含 `astro ^7`，但本方案不用它，原因见 4.1 |
+| `satori` | 0.35.0 | 2026-10-06 查询。与框架无关，构建期运行；PNG 转换用 Astro 自带的 `sharp`（0.35），不另装原生依赖 |
 
 ## 4. 用轮子的部分
 
@@ -117,11 +118,15 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 
 时机：第一篇带代码的真实文章发布之前。
 
-### 4.4 OG 分享图：用 astro-og-canvas
+### 4.4 OG 分享图：构建期用 satori 生成
+
+原计划：
 
 - 构建期为每篇文章和每个项目生成一张 PNG，按站点配色排版标题、类型和站点名。
 - 中文标题需要在仓库里放一个中文字体文件（比如 Noto Sans SC 子集）。字体只在构建期用，不发给访客。
 - 同时修正 `BaseLayout.astro`：详情页的 `og:type` 改成 `article`，补上 `og:image`、`twitter:card` 和 `article:published_time`。
+
+实施时没有用 astro-og-canvas：它的版式固定为“logo、标题、描述”三段，放不下计划里的类型和站点名，只能把它们画进背景图。改用 satori（Vercel 的 HTML/CSS 转 SVG 库，`@vercel/og` 的底层）自己排版，再用 Astro 自带的 sharp 转成 PNG。代价是多写约 100 行，好处是版式完全自定，也不需要 astro-og-canvas 依赖的 26 MB CanvasKit。
 
 时机：替换真实内容之后、对外分享之前。对应建设方案 V1.1 的"定制 Open Graph 图片"。
 
@@ -143,7 +148,7 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 
 ### 5.2 新增，自己写
 
-- **相关文章**：构建期按标签重合度取前 3 篇，放在详情页底部。逻辑只有十几行，引入库不划算。对应建设方案 V1.1 的"相关文章"。
+- **相关文章**：构建期按标签重合度取前 3 篇，放在详情页底部。逻辑只有十几行，引入库不划算。对应建设方案 V1.1 的"相关文章"。实施时把项目也算进来（项目的技术栈当标签），见第 9 节。
 
 ## 6. 内部整理（与轮子无关，最先做）
 
@@ -226,6 +231,17 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 - 换成真实笔记后发现，Pagefind 1.5 在浏览器端用 `Intl.Segmenter` 切分查询，和建索引时的分词不一致：“镜像”“端口”“调试”这类词被切成单字，前者完全搜不到，后者漏掉了主题就是调试的那篇。实测 48 个常见技术词里 5 个受影响。Pagefind 没有关闭这种切分的选项，#987 提的子串搜索也没有实现。
 - 处理：`SearchPalette.astro` 发现查询里有会被切成单字的中文时，每段只留第一个字，借 Pagefind 的前缀匹配拿候选页，再逐页核对原文里是否真有这个词；命中的排前面（标题含词优先，其次按出现次数），摘要从原文截取。其余查询不受影响。最坏情况多加载的是候选页的片段，现在全站片段合计 192KB。
 - 一并核实了“中文标题的目录链接点了不跳转”：Playwright 实测跳转正常，是内置浏览器面板在后台时平滑滚动不推进造成的假象，补了回归用例。
+
+阶段 3 收尾：相关内容、分享图（分支 `feat/related-og-hide-video`）：
+
+- 相关内容（`src/lib/related.ts`、`RelatedContent.astro`）：文章和项目详情页底部最多列 3 条，文章用标签、项目用技术栈。排序依次看共同标签数、共同标签有多少见（只有两条内容共有的 LangChain 比人人都有的 Python 更说明问题）、日期。没有共同标签的不凑数：Prompt 和 RAG 两篇各只有 1 条，文档没有标签，不显示。把项目算进来是因为只看文章时 6 篇里有 2 篇一条都没有；现在笔记和项目互相引用，比如 Docker 指南会推荐两个用了 Docker 的项目。
+- 分享图：`src/pages/og/[...path].png.ts` 在构建期给每篇文章、每个项目、每份文档各生成一张 1200×630 的 PNG，其余页面共用 `/og/site.png`。版式见 `src/lib/og-render.ts`：顶栏同网站品牌区，右上角是类型，左侧色条用类型色；“主题：副题”式标题在冒号后换行；底部是标签和日期（项目是状态、文档是版本）。每张 25–35 KB，10 张共用约 1.5 秒。
+- 字体：`src/assets/og/` 下是 Noto Sans SC 常规体和粗体的子集（OFL 1.1，许可证随附），覆盖 GB2312 的全部汉字和符号，加上现有内容 frontmatter 里出现的字，两个文件共约 3.3 MB。由 `npm run og:fonts` 从本机已安装的 Noto Sans SC 生成。构建遇到字体里没有的字会直接失败，并提示重新生成子集，不会产出带方框的图。
+- meta：详情页 `og:type` 改为 `article`，补 `og:image`（含宽高、类型、替代文字）、`og:site_name`、`og:locale`、`twitter:card` 和 `article:published_time`、`article:modified_time`、`article:tag`。
+- 依赖：新增 `satori`；`sharp` 原本是 Astro 的可选依赖，改为直接依赖；脚本用的 `subset-font` 放在 devDependencies。satori 0.35.0 锁定的 `fflate` 0.7.3 有一条告警（解析畸形 ZIP64 时死循环，satori 只用它解压字体，用不到这个函数），用 `overrides` 升到修复版 0.7.5。升级 satori 时检查它是否已自带修复版，是的话删掉这条 override。
+- 同批还有两项：演示视频按用户决定先隐藏，开关是 `src/data/site.ts` 的 `features.videos`（见 `content-inventory.md` D 节）；本地 e2e 固定 4 个进程，实测 4 到 10 个进程总耗时只差一两秒，瓶颈在最长的单个用例。
+- 实施中发现：satori 把空数组也当作多个子节点，要求 `display: flex`；平衡换行和 `lineClamp` 一起用时会误加省略号，所以平衡换行的部分改用最大高度截断。
+- 新增 e2e 用例：站点地图里每个页面的 `og:image` 都指向存在的 1200×630 PNG，详情页是 `article`；文章的发布时间和标签；相关内容的排序和“没有就不显示”；视频栏目关闭时 `/video/` 返回 404，导航、星图和站点地图里都没有视频。
 
 ## 参考
 

@@ -1,6 +1,6 @@
 # 个人博客
 
-中文内容为主的个人博客，Astro 7 静态站，部署在 Cloudflare Pages。站点骨架和流程已上线，内容正在分批换成真实内容：项目、简历、履历、个人介绍、学习笔记和技术文档已替换，演示视频仍是模板占位。进度和每批的审查记录见 `docs/content-inventory.md`、`docs/privacy-review.md`。
+中文内容为主的个人博客，Astro 7 静态站，部署在 Cloudflare Pages。站点骨架和流程已上线，内容正在分批换成真实内容：项目、简历、履历、个人介绍、学习笔记和技术文档已替换；演示视频还没有，栏目先用开关隐藏（见下文“栏目开关”）。进度和每批的审查记录见 `docs/content-inventory.md`、`docs/privacy-review.md`。
 
 ## 目录约定
 
@@ -20,6 +20,7 @@ npm run dev        # astro dev
 npm run check      # astro check，类型与内容校验
 npm run build      # 生产构建，结束后用 Pagefind 生成搜索索引
 npm run test:e2e   # Playwright，会用生产构建并自动起 preview
+npm run og:fonts   # 重新生成分享图字体子集，构建报“分享图字体缺字”时用
 ```
 
 需要 Node.js >= 22.12.0，本机、CI 和 Pages 统一用 Node 24。CI（`.github/workflows/ci.yml`）在 push 到 `main` 和 PR 上跑 `check` → `build` → `test:e2e`，改完代码本地至少过一遍这三步再说完成。
@@ -28,6 +29,7 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 - Pagefind 建索引和浏览器端切分查询（`Intl.Segmenter`）用的分词不同，“镜像”“调试”这类词会被浏览器切成单字，直接搜搜不到。`SearchPalette.astro` 对这类查询按原文子串补充匹配，原文里出现查询词的页面排在前面；其余查询仍按 Pagefind 的排序。
 - 在 Claude 内置浏览器里测页内锚点跳转不可靠：面板在后台时不刷新画面，平滑滚动不会推进，看起来像“点了不跳”。以 Playwright 的结果为准。
 - 改了 Markdown 渲染相关的配置（如 `astro.config.mjs` 里的 Expressive Code）后，先删 `site/node_modules/.astro` 再 build，否则会沿用缓存里的旧渲染结果。
+- `package.json` 的 `overrides` 把 satori 锁定的 `fflate` 从 0.7.3 升到修复版 0.7.5，以消除 `npm audit` 告警。升级 satori 时看它是否已自带修复版，是的话删掉这条。
 
 ## 内容模型
 
@@ -50,6 +52,16 @@ npm run test:e2e   # Playwright，会用生产构建并自动起 preview
 文章和文档页都能下载 Markdown 原文：`src/pages/blog/[slug].md.ts`、`src/pages/docs/[slug].md.ts` 在构建时生成 `/blog/<slug>.md`、`/docs/<slug>.md`，导出逻辑在 `src/lib/markdown-export.ts`；下载页自动列出全部文章和文档。`downloads` collection 只放另外提供的独立文件，可以为空。PDF 由访客用浏览器打印另存，打印样式在 `global.css` 末尾，打印前会临时切到浅色主题。文章配图放在 `public/images/blog/<文章 slug>/`，正文里用 `/images/...` 绝对路径引用，导出时会换成完整网址。
 
 读内容时优先用 `site/src/lib/content.ts`：`getPublishedPosts()` 取非草稿文章并按日期倒序，`collectContent()` 把五类 Markdown 内容整理成统一结构。内容类型的显示名称在 `site/src/lib/kinds.ts`。
+
+文章和项目详情页底部的“相关内容”在构建时按共同标签计算（`src/lib/related.ts`，项目的技术栈当标签用），所以标签和技术栈的写法要统一，比如都写 `FastAPI`；没有共同标签就不显示。
+
+### 栏目开关
+
+`site/src/data/site.ts` 的 `features.videos` 控制视频栏目，目前是 `false`：导航、首页星图和搜索面板里都没有视频，`/video/` 不生成。用户做好演示视频后再开启，步骤见 `docs/content-inventory.md` D 节。e2e 用例按这个开关断言对应的状态，切换开关不用改测试。
+
+### 分享图
+
+构建时 `src/pages/og/[...path].png.ts` 给每篇文章、每个项目、每份文档生成一张 1200×630 的 PNG（`/og/blog/<slug>.png` 等），其余页面共用 `/og/site.png`；路径约定在 `src/lib/og.ts`，版式在 `src/lib/og-render.ts`（satori 排版，sharp 转 PNG）。中文字体是 `src/assets/og/` 下的 Noto Sans SC 子集，覆盖 GB2312 全部汉字和现有内容用到的字。新内容的标题、摘要或标签用了子集里没有的字时，构建会失败并提示；在 `site/` 下运行 `npm run og:fonts` 重新生成后再 build（脚本默认读 Windows 已安装的 Noto Sans SC，说明见同目录的 `README.md`）。
 
 ## 硬性约束
 
