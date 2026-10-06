@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: '个人工程实践手记',
-  description: '记录学习笔记、技术文档与个人工程实践的中文博客模板。',
+  description: '记录学习笔记、技术文档与个人工程实践的中文博客。',
   email: '2644897763@qq.com',
   wechat: 'ZJF2644897763',
   // 博客仓库是私有的，访客打不开，这里指向个人主页。
@@ -23,8 +23,8 @@ export const navItems = [
   { href: '/projects/', label: '项目', summary: '个人工程实践项目、技术栈和本人贡献。' },
   { href: '/docs/', label: '文档', summary: '按版本和更新时间整理的技术文档。' },
   ...(features.videos ? [{ href: '/video/', label: '视频', summary: '项目演示视频和文字摘要。' }] : []),
-  { href: '/downloads/', label: '下载', summary: '公开下载资料、文件类型、大小和版本信息。' },
-  { href: '/resume/', label: '简历', summary: '网页版简历摘要和脱敏 PDF 下载入口。' },
+  { href: '/downloads/', label: '下载', summary: '文章、笔记和文档的 Markdown 原文下载。' },
+  { href: '/resume/', label: '简历', summary: '网页版简历：求职意向、专业技能和项目经历摘要。' },
   { href: '/timeline/', label: '履历', summary: '教育、项目与实践经历时间线。' },
   { href: '/about/', label: '关于', summary: '个人介绍、技术方向和公开联系方式。' },
 ];
