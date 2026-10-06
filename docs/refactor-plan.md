@@ -245,6 +245,11 @@ Expressive Code 提供复制按钮、文件名标题、终端窗口样式、行�
 - 2026-10-06 合并到 `main`（`c02896b`），CI 和生产部署通过。线上页面和本地用生产域名构建的结果一致，只多了 Cloudflare 自动插入的统计脚本；10 张分享图里 7 张逐字节相同，另外 3 张只是 PNG 压缩编码不同（Windows 和 Linux 上的 sharp），解码后像素完全一致；`/video/` 返回 404。
 - 比对时发现：本地 Windows 工作区的文件是 CRLF 换行，所以本地构建的 Markdown 下载比线上（Linux 构建，LF）大约 2%，下载页显示的大小也跟着偏大。只影响本地构建，以线上为准。之后已在 `.gitattributes` 里把 Markdown 固定为 LF 检出，本地构建的 7 份 Markdown 下载和下载页都已和线上一致。
 
+维护项（2026-10-06）：
+
+- 依赖告警（PR #11，`7482819`）：10 月 5 日后新公布的 3 条。`smol-toml`、`source-map-js` 升补丁版本；`postcss-selector-parser` 只有 7.x 修了，而 Expressive Code 最新版仍依赖 `postcss-nested` 6，用 `overrides` 把它换成 7.0.2。构建产物逐字节不变，`npm audit` 恢复为 0；线上代码块样式和本地构建一致。
+- 模板时期的文字（PR #12，`0a6b520`）：全站描述去掉“模板”二字，页脚改为站点名，搜索面板里简历、下载两条过时的说明换掉。线上已核对，旧文字没有残留。
+
 ## 参考
 
 - Astro 7 升级指南：<https://docs.astro.build/en/guides/upgrade-to/v7/>
