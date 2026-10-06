@@ -1,1 +1,6 @@
 *.pdf binary
+
+# Markdown 一律按 LF 换行检出。Windows 上 Git 默认按 CRLF 检出，本地构建的 Markdown 下载会带上 CRLF，
+# 下载页显示的大小也比线上（Cloudflare 在 Linux 上构建，LF）大约 2%。
+*.md text eol=lf
+*.mdx text eol=lf
