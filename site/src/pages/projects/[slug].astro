@@ -30,7 +30,7 @@ const related = relatedTo(`project:${project.id}`, await collectContent());
   article={{ tags: project.data.techStack }}
 >
   <Fragment slot="meta">
-    <p class="detail-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span></p>
+    <p class="detail-meta"><span class="status" data-status={project.data.status}>{project.data.status}</span>{project.data.period && <span>{project.data.period}</span>}</p>
     <ul class="stack" aria-label="技术栈">{project.data.techStack.map((tech) => <li>{tech}</li>)}</ul>
   </Fragment>
   <p class="callout"><strong>本人贡献：</strong>{project.data.role}</p>

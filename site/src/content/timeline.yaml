@@ -24,3 +24,19 @@
   description: "串起规划、论文搜索、全文获取、证据分析、语义核验与报告生成，支持人工审批和预算约束下的真实任务执行。"
   result: "通过 831 项后端测试、27 项前端单测和 12 项 E2E；对照实验后保留完整核验，而不是调用更少但覆盖下降的选择性回放。"
   template: false
+- id: blog
+  order: 4
+  period: "2026.09.04 - 2026.10.07"
+  type: "项目"
+  title: "个人工程实践手记 · 纯静态技术博客"
+  description: "基于 Astro 7 的纯静态中文技术博客，集成 Pagefind 全文搜索、构建期 D3 星图、OG 分享图生成与 Playwright E2E。"
+  result: "全流程自动化 CI/CD，Lighthouse 移动端高分；实现零运行成本托管与内容全量安全脱敏开源码。"
+  template: false
+- id: token-burner
+  order: 5
+  period: "2026.10.05 - 2026.10.07"
+  type: "项目"
+  title: "SenseNova Token Burner · 桌面消耗面板"
+  description: "轻量级 Windows 11 C# WinForms 桌面面板，多 API Key 本地加密管理与按目标安全消耗 Flash-Lite 专属积分。"
+  result: "自包含 .NET 零外部依赖安装包，全量 351 项自动化测试 0 告警 0 错误通过，未知请求拦截人工核查。"
+  template: false
