@@ -4,6 +4,7 @@ summary: "面向学术调研，串起规划、论文搜索、全文获取、证�
 role: "个人项目，独立完成需求设计、架构、前后端开发、测试与评测。"
 techStack: ["Python", "LangGraph", "FastAPI", "SQLite", "React", "Docker"]
 status: "进行中"
+period: "2026.08 - 至今"
 repoUrl: "https://github.com/Zhou-Jin-Feng/ScholarTrace"
 featured: true
 template: false

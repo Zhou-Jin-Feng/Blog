@@ -4,6 +4,7 @@ summary: "面向本地文档的知识库，支持文档管理、流式问答与�
 role: "个人项目，独立完成需求设计、架构、前后端开发、测试与评测。"
 techStack: ["Python", "FastAPI", "React", "TypeScript", "Milvus", "LangChain", "Docker"]
 status: "进行中"
+period: "2026.08 - 至今"
 repoUrl: "https://github.com/Zhou-Jin-Feng/DocuMind"
 featured: true
 template: false

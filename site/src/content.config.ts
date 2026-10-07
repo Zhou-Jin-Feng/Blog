@@ -29,6 +29,7 @@ const projects = defineCollection({
     role: z.string().min(1),
     techStack: z.array(z.string().min(1)).min(1),
     status: z.enum(['进行中', '已完成', '维护中']),
+    period: z.string().optional(),
     repoUrl: z.url().optional(),
     demoUrl: z.url().optional(),
     videoUrl: z.url().optional(),
