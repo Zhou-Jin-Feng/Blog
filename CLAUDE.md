@@ -11,6 +11,8 @@
 
 `site/CLAUDE.md` 和 `site/AGENTS.md` 是 Astro 脚手架自动生成的样板，只有通用文档链接，本文件优先。
 
+许可证：代码和文档按 MIT（根目录 `LICENSE`）。`site/src/content/` 的内容和 `site/public/images/` 的配图不在 MIT 范围内，作者保留所有权利；`site/src/assets/og/` 的字体按 OFL 1.1。加入第三方素材前先确认授权，并同步更新 README 的“许可证”一节。
+
 ## 命令
 
 ```bash
