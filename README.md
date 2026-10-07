@@ -1,60 +1,66 @@
-# 个人博客
+# 个人工程实践手记
 
-这是一个以中文内容为主的个人博客项目，用于公开展示学习笔记、技术文档、个人工程实践项目、Demo、演示视频和可下载资料。
+中文个人博客，记录学习笔记、技术文档和个人工程实践。线上地址：<https://blog-4cr.pages.dev>
 
-**Stage 5 已以 PASS WITH NOTES 通过最终人工闸门。** 模板工程版已部署到 Cloudflare Pages，并完成线上回归和平台重新部署演练；真实内容替换、最终脱敏和授权复核仍按用户决定后置。
+## 有什么
 
-目标远端仓库：`https://github.com/Zhou-Jin-Feng/Blog.git`（本地 `origin` 已配置，仓库保持私有）。
+- **博客**：学习笔记和工程实践文章。每篇都能下载 Markdown 原文，也能打印或存为 PDF。
+- **项目**：个人工程项目的技术栈、本人贡献和状态。
+- **文档**：按版本和更新时间整理的技术文档。
+- **简历、履历、关于**：网页版简历、经历时间线和公开联系方式。
+- 首页是一张星图，把栏目、内容和标签连成关系图。`Ctrl+K`（或 `/`）打开全站搜索。文章和项目底部按共同标签推荐相关内容。
+- 演示视频栏目已经做好，暂时用开关隐藏，有了真实视频再打开。
 
-## 文档入口
+学习笔记由作者在 AI 辅助下整理，页面底部和下载的 Markdown 里都有注明。
 
-- [个人博客首版建设与执行手册-优化版](docs/个人博客首版建设与执行手册-优化版.md)：当前执行依据，推荐路线和阶段闸门仍需按记录确认。
-- [个人博客建设建议方案](docs/个人博客建设建议方案.md)：早期方案参考，不自动覆盖优化版中的最新决策表。
-- [项目任务清单](docs/project-task-list.md)：阶段任务、状态和闸门。
-- [执行记录](docs/execution-log.md)：命令证据、决策和人工确认。
-- [内容清单](docs/content-inventory.md)：首发内容准备和公开审查。
-- [发布检查清单](docs/release-checklist.md)：预发布与正式发布检查。
-- [公开内容与脱敏审查](docs/privacy-review.md)：当前模板基线结果与真实内容替换后的强制检查。
+## 技术栈
 
-## 计划路线
+| 用途 | 选型 |
+| --- | --- |
+| 站点 | [Astro](https://astro.build/) 7，纯静态输出 |
+| 内容 | Content collections，用 zod 严格校验；Markdown、MDX、YAML |
+| 搜索 | [Pagefind](https://pagefind.app/) 建索引；搜索面板自己写，补了中文短词匹配 |
+| 代码块 | [Expressive Code](https://expressive-code.com/)，跟随站点深浅主题 |
+| 首页星图 | 构建期用 [d3-force](https://d3js.org/d3-force) 布局，浏览器端只负责交互 |
+| 分享图 | 构建期用 [satori](https://github.com/vercel/satori) 排版、sharp 转 PNG |
+| 测试 | [Playwright](https://playwright.dev/) 端到端测试 |
+| CI / 部署 | GitHub Actions；Cloudflare Pages，统计用 Cloudflare Web Analytics |
 
-按手册顺序推进：
+## 目录
 
-1. Stage 0：决策、环境、内容和隐私准备（已通过）。
-2. Stage 1：仓库与 Astro 基线（已通过）。
-3. Stage 2：内容模型与 P0 页面（已通过，模板内容保留）。
-4. Stage 3：视觉、媒体、响应式与无障碍（已通过，保留模板）。
-5. Stage 4：质量、安全与预发布（模板范围 PASS WITH NOTES）。
-6. Stage 5：模板工程版已上线并完成恢复演练（PASS WITH NOTES）。
+- `site/`：Astro 站点，npm 命令都在这里运行。
+- `docs/`：方案、内容清单、脱敏审查和发布记录，见下文“文档”。
+- `CLAUDE.md`：开发约定，内容最全。开发中使用了 AI 编程代理，这份文件也是给代理读的项目说明。
+- `.github/workflows/ci.yml`：CI。每次推送到 `main` 和每个 PR 都依次运行 `check`、`build`、`test:e2e`。
 
-## 本地开发与验证
+## 本地开发
 
-需要 Node.js 22.12.0 或更高的偶数版本。命令均从 `site/` 目录运行：
+需要 Node.js 22.12.0 或更高版本，CI 和 Pages 用 Node 24。
 
-```powershell
+```bash
+cd site
 npm ci
-npm run dev
-npm run check
-npm run build
-npm run test:e2e
+npm run dev        # 开发服务器
+npm run check      # 类型和内容校验
+npm run build      # 生产构建，结束后用 Pagefind 生成搜索索引
+npm run test:e2e   # Playwright 端到端测试，使用生产构建
 ```
 
-Playwright 测试会使用生产构建并自动启动本地预览。未设置 `SITE_URL` 时，Sitemap 和
-canonical 使用 `http://localhost:4321` 回退地址；Cloudflare Pages 生产环境已设置真实地址。
+- 搜索索引只在 `build` 时生成，`npm run dev` 下搜不到正文。调试搜索要先 build，再 `npm run preview`。
+- 不设环境变量 `SITE_URL` 时，sitemap 和 canonical 使用 `http://localhost:4321`。
+- 分享图的中文字体是 Noto Sans SC 子集。新内容用到子集里没有的字时构建会失败，运行 `npm run og:fonts` 重新生成，说明见 [site/src/assets/og/README.md](site/src/assets/og/README.md)。
 
-## 部署入口
+## 部署
 
-生产地址：[https://blog-4cr.pages.dev](https://blog-4cr.pages.dev)。GitHub 私有仓库已连接
-Cloudflare Pages，生产分支为 `main`，Root directory 为 `site`，Build command 为
-`npm run build`，Build output directory 为 `dist`。生产环境使用 `NODE_VERSION=22` 和
-`SITE_URL=https://blog-4cr.pages.dev`。
+推送到 `main` 会触发 Cloudflare Pages 生产部署。Pages 配置：Root directory `site`，构建命令 `npm run build`，输出目录 `dist`，环境变量 `NODE_VERSION=24` 和 `SITE_URL=https://blog-4cr.pages.dev`。
 
-发布前先更新内容清单并完成隐私、授权和链接检查，再运行 `npm ci`、`npm run check`、
-`npm run build` 和 `npm run test:e2e`。取得当次明确授权后才可提交和推送；推送到 `main`
-会触发 Pages 自动部署。发布后检查生产地址、关键路由、下载、RSS、Sitemap、canonical、
-响应头和 Lighthouse。需要恢复时，优先在 Cloudflare Pages 对已验证提交执行重新部署；
-代码回退使用 `git revert`，不得对公开历史执行强制推送。
+改动都走分支和 PR，CI 通过后再合并。需要回退时用 `git revert`，或在 Pages 里重新部署已验证的提交，不强制推送。
 
-## 说明
+## 文档
 
-`docs/` 保存公开的项目规划、执行和发布文档；`agent/` 保存不纳入项目交付的流程记录与可复用经验。未获得用户当次明确授权，不执行 `git commit` 或 `git push`。
+- [重构方案与进度](docs/refactor-plan.md)：当前的技术方案，以及之后每次改动的记录。
+- [内容清单](docs/content-inventory.md)：已发布内容的来源和审查状态。
+- [脱敏审查记录](docs/privacy-review.md)：每批内容公开前的隐私和授权检查。
+- [发布检查清单](docs/release-checklist.md)
+
+首版（模板阶段，2026 年 8 月底至 9 月）的记录：[建设与执行手册](docs/个人博客首版建设与执行手册-优化版.md)、[早期建议方案](docs/个人博客建设建议方案.md)、[任务清单](docs/project-task-list.md)、[执行记录](docs/execution-log.md)、[Lighthouse 报告](docs/reports/lighthouse/README.md)。
