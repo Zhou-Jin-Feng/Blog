@@ -3,7 +3,7 @@ export const siteConfig = {
   description: '记录学习笔记、技术文档与个人工程实践的中文博客。',
   email: '2644897763@qq.com',
   wechat: 'ZJF2644897763',
-  // 博客仓库是私有的，访客打不开，这里指向个人主页。
+  // 页脚和关于页的 GitHub 链接，指向个人主页。
   githubUrl: 'https://github.com/Zhou-Jin-Feng',
 };
 
