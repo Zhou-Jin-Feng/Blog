@@ -64,3 +64,10 @@ npm run test:e2e   # Playwright 端到端测试，使用生产构建
 - [发布检查清单](docs/release-checklist.md)
 
 首版（模板阶段，2026 年 8 月底至 9 月）的记录：[建设与执行手册](docs/个人博客首版建设与执行手册-优化版.md)、[早期建议方案](docs/个人博客建设建议方案.md)、[任务清单](docs/project-task-list.md)、[执行记录](docs/execution-log.md)、[Lighthouse 报告](docs/reports/lighthouse/README.md)。
+
+## 许可证
+
+代码和文档按 [MIT 许可证](LICENSE) 发布，以下内容除外：
+
+- `site/src/content/` 下的文章、笔记、项目介绍、简历和履历，以及 `site/public/images/` 下的配图：作者保留所有权利，转载请先联系作者。
+- `site/src/assets/og/` 下的 Noto Sans SC 字体子集：按 [SIL Open Font License 1.1](site/src/assets/og/OFL.txt) 授权。

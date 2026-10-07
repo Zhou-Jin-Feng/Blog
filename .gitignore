@@ -32,3 +32,6 @@ tmp/
 # Local tool output (Serena, Graphify)
 .serena/
 graphify-out/
+
+# Claude Code 本地配置：launch.json 里有本机绝对路径（不提交）
+.claude/
