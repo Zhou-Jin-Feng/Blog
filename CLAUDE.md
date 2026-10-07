@@ -9,7 +9,7 @@
 - `agent/` — 流程记录与可复用经验，不纳入交付。
 - `private/` — 本地私有资料（如简历原件），已加入 `.gitignore`，不提交。网站内容只能从这里提取用户同意公开的信息。
 
-`site/CLAUDE.md` 和 `site/AGENTS.md` 是 Astro 脚手架自动生成的样板，只有通用文档链接，本文件优先。
+`site/AGENTS.md` 是 Astro 脚手架自动生成的样板，只有通用的开发说明和文档链接，本文件优先。
 
 许可证：代码和文档按 MIT（根目录 `LICENSE`）。`site/src/content/` 的内容和 `site/public/images/` 的配图不在 MIT 范围内，作者保留所有权利；`site/src/assets/og/` 的字体按 OFL 1.1。加入第三方素材前先确认授权，并同步更新 README 的“许可证”一节。
 
@@ -69,7 +69,7 @@ npm run og:fonts   # 重新生成分享图字体子集，构建报“分享图�
 ## 硬性约束
 
 - **未获得用户当次明确授权，不执行 `git commit` 或 `git push`。** 每次都要单独确认，上一次的授权不延续到下一次。
-- 推送到 `main` 会直接触发 Cloudflare Pages 生产部署，没有中间环节。所以改动一律建分支、提 PR，CI 通过且用户确认后由用户合并，不直接推 `main`。仓库公开后 `main` 开了分支保护兜底（必须经 PR 合并、CI 通过，禁止强推和删除）；公开前免费方案开不了分支保护，只靠流程遵守。
+- 推送到 `main` 会直接触发 Cloudflare Pages 生产部署，没有中间环节。所以改动一律建分支、提 PR，CI 通过且用户确认后由用户合并，不直接推 `main`。`main` 有分支保护兜底，见下文“GitHub 仓库设置”。
 - 不对公开历史强制推送。需要回退用 `git revert`，或在 Pages 里对已验证的提交重新部署。
 - 提交信息、PR 正文和评论、`docs/` 和代码注释都按公开内容对待：不写真名、手机号、未公开的邮箱、本机绝对路径和任何凭据。
 - 发布前先更新 `docs/content-inventory.md`，并完成隐私、授权、链接检查。流程见 `docs/release-checklist.md`。
@@ -79,6 +79,14 @@ npm run og:fonts   # 重新生成分享图字体子集，构建报“分享图�
 生产地址 https://blog-4cr.pages.dev 。Pages 配置：生产分支 `main`，Root directory `site`，Build command `npm run build`，输出 `dist`，环境变量 `NODE_VERSION=24` 和 `SITE_URL=https://blog-4cr.pages.dev`。
 
 本地未设 `SITE_URL` 时，sitemap 和 canonical 回退到 `http://localhost:4321`。
+
+## GitHub 仓库设置
+
+仓库自 2026-10-07 起公开。以下设置都由用户在网页上配置（本机权限审核不允许代理用 `gh` 改仓库设置），需要调整时给用户操作步骤，改完用只读 API 核对：
+
+- `main` 分支保护：必须经 PR 合并，不要求审批；必须通过 GitHub Actions 的 `verify` 检查；不要求先同步 `main`；管理员也不能绕过；禁止强推和删除。
+- PR 合并后远端分支自动删除，只需清理本地分支。
+- Secret scanning 和推送保护已开启，带密钥的提交会被拒绝推送。
 
 ## 本机环境
 
